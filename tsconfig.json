@@ -7,15 +7,21 @@
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
@@ -26,7 +32,8 @@
       "@screens/*": ["src/screens/*"],
       "@tokens/*": ["src/tokens/*"],
       "@lib/*": ["src/lib/*"],
-      "@workflows/*": ["src/workflows/*"]
+      "@workflows/*": ["src/workflows/*"],
+      "@config/*": ["src/config/*"]
     }
   },
   "include": ["src"],

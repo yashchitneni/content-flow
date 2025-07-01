@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "AI-powered content creation studio",
   "directories": {
     "doc": "docs"
   },
@@ -12,28 +13,42 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "test": "jest",
+    "test:workflows": "jest src/workflows",
+    "lint": "eslint src"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@tauri-apps/cli": "^2.6.2",
     "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
     "autoprefixer": "^10.4.21",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@langchain/anthropic": "^0.1.0",
+    "@langchain/core": "^0.1.0",
+    "@langchain/langgraph": "^0.0.20",
+    "@langchain/openai": "^0.0.10",
     "@tauri-apps/api": "^2.6.0",
+    "dotenv": "^16.3.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4",
     "zustand": "^5.0.6"
   }
 }
