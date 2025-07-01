@@ -76,7 +76,7 @@ export const Progress: React.FC<ProgressProps> = ({
           style={indeterminate ? { width: '100%' } : { width: `${percentage}%` }}
         />
       </div>
-      <style jsx>{`
+      <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
