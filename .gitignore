@@ -23,3 +23,10 @@ node_modules/
 
 # OS specific
 .DS_Store
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Build outputs
+dist/
