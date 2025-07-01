@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::Manager;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
