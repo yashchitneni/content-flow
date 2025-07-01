@@ -112,6 +112,12 @@ Follow the UUID primary key pattern
 Maintain temporal tracking fields
 
 Task Master Configuration
+CRITICAL Task Management Rules
+Task Status Updates: ALWAYS use Task Master to update task statuses when completing work
+Task References: EVERY code change MUST reference the relevant task ID from Task Master
+Status Flow: pending → in-progress → done (or blocked/deferred if issues arise)
+Completion Criteria: A task is ONLY marked as done when ALL acceptance criteria are met
+
 PRD Generation Rules
 When generating PRDs, the task master should:
 
@@ -119,6 +125,7 @@ Cross-reference existing requirements: Check if the task relates to existing FR-
 Include design system references: For UI tasks, specify which atoms/molecules/organisms to use
 Specify data implications: Reference relevant entities from the ERD
 Define success criteria: Based on the functional requirements' success metrics
+Update task status: Mark tasks as in-progress when starting, done when completed
 
 Task Templates
 UI Component Task Template
@@ -197,3 +204,24 @@ Maintain consistency with the established patterns
 Update this file when new patterns emerge
 
 Remember: Every task should reference at least one documentation file for context.
+
+Task Master Integration Rules
+
+BEFORE starting any development work:
+- Check task status in Task Master (mcp__task-master-ai__get_task)
+- Update task status to "in-progress" (mcp__task-master-ai__set_task_status)
+- Reference the task ID in all commits and code comments
+
+DURING development:
+- Add comments referencing task ID (e.g., // Task #1: Initialize project)
+- Update task details if new information discovered (mcp__task-master-ai__update_task)
+- Create subtasks if task needs breakdown (mcp__task-master-ai__add_subtask)
+
+AFTER completing work:
+- Verify ALL acceptance criteria are met
+- Update task status to "done" (mcp__task-master-ai__set_task_status)
+- Document any deviations or additional work done
+
+Git Commit Messages:
+- Format: "Task #[ID]: [Brief description]"
+- Example: "Task #1: Initialize Tauri + React project structure"

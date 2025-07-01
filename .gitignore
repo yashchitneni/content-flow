@@ -30,3 +30,6 @@ src-tauri/gen/
 
 # Build outputs
 dist/
+
+# Git worktrees
+worktrees/

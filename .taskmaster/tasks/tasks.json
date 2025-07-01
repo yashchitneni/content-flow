@@ -5,7 +5,7 @@
         "id": "1",
         "title": "Initialize Tauri + React Project Structure",
         "description": "Set up the foundational ContentFlow project with Tauri backend (Rust) and React frontend with TypeScript and Tailwind CSS",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [],
@@ -219,7 +219,7 @@
         "id": "9",
         "title": "Implement Descript OAuth 2.0 Authentication",
         "description": "Create secure OAuth 2.0 flow for Descript integration with PKCE and token storage",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -418,7 +418,7 @@
         "id": "16",
         "title": "Set Up LangGraph for Content Generation",
         "description": "Initialize LangGraph workflow system for AI-powered content generation with proper configuration",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -586,7 +586,7 @@
         "id": "22",
         "title": "Implement Error Handling and User Feedback",
         "description": "Create comprehensive error handling system with clear user feedback for all operations",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -727,7 +727,10 @@
         "day2": 5,
         "day3": 7,
         "day4": 7
-      }
+      },
+      "created": "2025-07-01T20:24:20.256Z",
+      "description": "Tasks for master context",
+      "updated": "2025-07-01T20:24:20.256Z"
     }
   }
 }
