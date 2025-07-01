@@ -29,7 +29,7 @@ fn main() {
             let handle = app.handle();
             
             // Initialize database
-            tauri::async_runtime::block_on(async move {
+            let database = tauri::async_runtime::block_on(async {
                 let database = db::Database::new(&handle).await
                     .expect("Failed to initialize database");
                 
@@ -37,9 +37,11 @@ fn main() {
                 database.migrate().await
                     .expect("Failed to run database migrations");
                 
-                // Store database in app state
-                app.manage(Arc::new(database));
+                database
             });
+            
+            // Store database in app state
+            app.manage(Arc::new(database));
             
             Ok(())
         })

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tauri::api::path::app_data_dir;
+use tauri::Manager;
 use std::fs;
 use std::path::PathBuf;
 use aes_gcm::{
@@ -100,7 +100,7 @@ pub struct SettingsService {
 
 impl SettingsService {
     pub fn new(app_handle: &tauri::AppHandle) -> Result<Self, Box<dyn std::error::Error>> {
-        let config_dir = app_data_dir(&app_handle.config()).ok_or("Failed to get app data dir")?;
+        let config_dir = app_handle.path().app_data_dir().map_err(|e| format!("Failed to get app data dir: {}", e))?;
         let settings_dir = config_dir.join("ContentFlow");
         fs::create_dir_all(&settings_dir)?;
         
