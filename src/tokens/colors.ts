@@ -1,10 +1,11 @@
 export const colors = {
   primary: {
+    50: '#E6F0FF',
     100: '#E6F0FF',
     400: '#3385FF',
     500: '#0066FF',
     600: '#0052CC',
-    700: '#0040A8',
+    700: '#0041A3',
   },
   secondary: {
     100: '#F3F0FF',
@@ -13,17 +14,28 @@ export const colors = {
   },
   semantic: {
     success: {
+      50: '#D1FAE5',
+      100: '#A7F3D0',
       500: '#10B981',
+      600: '#059669',
     },
     warning: {
+      50: '#FEF3C7',
+      100: '#FDE68A',
       500: '#F59E0B',
+      600: '#D97706',
     },
     error: {
-      100: '#FEE2E2',
+      50: '#FEE2E2',
+      100: '#FECACA',
       500: '#EF4444',
+      600: '#DC2626',
     },
     info: {
+      50: '#DBEAFE',
+      100: '#BFDBFE',
       500: '#3B82F6',
+      600: '#2563EB',
     },
   },
   neutral: {
