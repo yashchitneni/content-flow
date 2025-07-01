@@ -1,11 +1,20 @@
 export type IconName = 
+  | 'check'
   | 'check-circle'
+  | 'x'
   | 'x-circle'
   | 'alert-circle'
   | 'info-circle'
-  | 'x'
+  | 'upload'
+  | 'folder'
+  | 'folder-open'
   | 'refresh'
-  | 'alert-triangle';
+  | 'alert-triangle'
+  | 'chevron-down'
+  | 'chevron-right'
+  | 'search'
+  | 'user'
+  | 'minus';
 
 export interface IconProps {
   name: IconName;

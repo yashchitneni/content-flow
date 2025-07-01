@@ -12,8 +12,8 @@ export const Tag: React.FC<TagProps> = ({
   color = 'gray'
 }) => {
   const colorClasses = {
-    primary: 'bg-primary-100 text-primary-700 hover:bg-primary-200',
-    secondary: 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200',
+    primary: 'bg-primary-100 text-primary-600 hover:bg-primary-200',
+    secondary: 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200',
     gray: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
   }
 

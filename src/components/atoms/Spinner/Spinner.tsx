@@ -27,7 +27,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
       width={spinnerSize}
       height={spinnerSize}
       viewBox="0 0 50 50"
-      style={{ animation: 'spin 1s linear infinite' }}
+      style={{ animation: 'spin 1s linear infinite' }} // duration-slow would be 500ms, but 1s is better for spinner
     >
       <circle
         cx="25"
@@ -41,7 +41,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
         strokeDashoffset="0"
         style={{
           transformOrigin: 'center',
-          animation: 'dash 1.5s ease-in-out infinite'
+          animation: 'dash 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite' // Using ease-in-out token
         }}
       />
       

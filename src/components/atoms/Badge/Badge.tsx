@@ -24,12 +24,12 @@ export const Badge: React.FC<BadgeProps> = ({
   }
 
   const variantClasses = {
-    primary: 'bg-primary-100 text-primary-700 hover:bg-primary-200',
-    secondary: 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200',
-    success: 'bg-green-100 text-green-700 hover:bg-green-200',
-    warning: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
-    error: 'bg-red-100 text-red-700 hover:bg-red-200',
-    info: 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+    primary: 'bg-primary-100 text-primary-600 hover:bg-primary-200',
+    secondary: 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200',
+    success: 'bg-success-100 text-success-700 hover:bg-success-200',
+    warning: 'bg-warning-100 text-warning-700 hover:bg-warning-200',
+    error: 'bg-error-100 text-error-700 hover:bg-error-200',
+    info: 'bg-info-100 text-info-700 hover:bg-info-200'
   }
 
   return (
