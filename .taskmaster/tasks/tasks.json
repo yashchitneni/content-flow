@@ -1,0 +1,733 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Initialize Tauri + React Project Structure",
+        "description": "Set up the foundational ContentFlow project with Tauri backend (Rust) and React frontend with TypeScript and Tailwind CSS",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [],
+        "subtasks": [],
+        "details": "References: system-architecture.md\nComponents: N/A (infrastructure)\nDatabase: N/A (setup phase)\n\nImplementation:\n1. Create new Tauri project with React template\n2. Configure TypeScript and Tailwind CSS\n3. Set up project structure following atomic design pattern\n4. Configure build scripts and development environment\n5. Set up ESLint and Prettier for code quality\n\nSuccess Criteria:\n- Tauri app launches with React frontend\n- TypeScript compilation working\n- Tailwind CSS configured with custom design tokens\n- Project structure matches documented architecture",
+        "acceptanceCriteria": "- Tauri app runs on macOS\n- React dev server connects to Tauri backend\n- Project structure follows atomic design\n- Build commands work for both dev and production",
+        "testStrategy": "Manual testing of app launch, hot reload verification, build process validation",
+        "effort": 2,
+        "tags": [
+          "setup",
+          "infrastructure",
+          "day1"
+        ],
+        "relatedDocs": [
+          "system-architecture.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "2",
+        "title": "Implement SQLite Database Schema",
+        "description": "Create the complete database schema with all entities defined in the ERD including proper relationships and indexes",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "1"
+        ],
+        "subtasks": [],
+        "details": "References: entity-relationship-diagram.md\nComponents: N/A (backend)\nDatabase: All 10 core entities\n\nImplementation:\n1. Set up SQLite with Rust sqlx\n2. Create migration system\n3. Implement all tables:\n   - Files (with UUID primary key)\n   - Folders\n   - Transcripts\n   - DescriptProjects\n   - GeneratedContent\n   - Tags\n   - TranscriptTags (N:M)\n   - ContentVersions\n   - ExportHistory\n   - Settings\n4. Add indexes for search performance\n5. Set up foreign key constraints\n\nSuccess Criteria:\n- All tables created with proper schema\n- UUID primary keys working\n- Relationships enforced\n- Indexes optimize query performance",
+        "acceptanceCriteria": "- Database migrations run successfully\n- All entities match ERD specifications\n- Foreign key constraints enforced\n- Temporal fields (created_at, updated_at) auto-populate",
+        "testStrategy": "Unit tests for database operations, migration testing, constraint validation",
+        "effort": 3,
+        "tags": [
+          "database",
+          "backend",
+          "day1"
+        ],
+        "relatedDocs": [
+          "entity-relationship-diagram.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "3",
+        "title": "Create Design Token System",
+        "description": "Implement the complete design token system with colors, typography, spacing, and animation values as defined in the atomic design system",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "1"
+        ],
+        "subtasks": [],
+        "details": "References: atomic-design-system.md (Section 2-3)\nComponents: Design tokens foundation\nDatabase: N/A\n\nImplementation:\n1. Create tokens configuration file\n2. Define color tokens:\n   - Primary: #0066FF\n   - Secondary: #6B46C1\n   - Semantic colors (success, warning, error)\n   - Neutral grays (50-950)\n3. Set up typography scale (8 levels)\n4. Configure spacing system (4px base)\n5. Add animation duration tokens\n6. Configure Tailwind to use tokens\n\nSuccess Criteria:\n- All design tokens accessible via CSS variables\n- Tailwind config uses token values\n- No magic numbers in components\n- Dark mode token variants ready",
+        "acceptanceCriteria": "- Design tokens match specification exactly\n- Tokens accessible in both CSS and JS\n- Tailwind extended with custom tokens\n- Documentation generated for token usage",
+        "testStrategy": "Visual regression tests, token validation scripts, Storybook documentation",
+        "effort": 2,
+        "tags": [
+          "frontend",
+          "design-system",
+          "day1"
+        ],
+        "relatedDocs": [
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "4",
+        "title": "Build Core UI Atoms",
+        "description": "Create the foundational atomic components including Button, Input, Icon, Badge, and other atoms defined in the design system",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "3"
+        ],
+        "subtasks": [],
+        "details": "References: atomic-design-system.md (Section 6.1)\nComponents: All 13 atom types\nDatabase: N/A\n\nImplementation:\n1. Create Button atom with variants (primary, secondary, ghost, danger)\n2. Build Input atom with states (default, focus, error, disabled)\n3. Implement Icon system with upload, folder, check icons\n4. Create Badge atom for orientation and type indicators\n5. Build StatusIndicator, LoadingSpinner, Toggle atoms\n6. Add Thumbnail, Tag, Avatar atoms\n7. Implement all 5-6 visual states per component\n\nSuccess Criteria:\n- All atoms follow design token system\n- Each has proper TypeScript interfaces\n- Accessibility attributes included\n- Storybook stories for all variants",
+        "acceptanceCriteria": "- 13 atom components completed\n- All visual states implemented\n- WCAG AA compliant\n- Full TypeScript coverage",
+        "testStrategy": "Unit tests for each atom, accessibility testing, visual regression tests",
+        "effort": 4,
+        "tags": [
+          "frontend",
+          "components",
+          "atoms",
+          "day1"
+        ],
+        "relatedDocs": [
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "5",
+        "title": "Implement Video File Drag-and-Drop Import",
+        "description": "Create the drag-and-drop functionality for video file imports with format validation and visual feedback",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "2",
+          "4"
+        ],
+        "subtasks": [],
+        "details": "References: FR-001, FR-002, FR-003, UF-001\nComponents: DropZone (molecule), FileGrid (organism)\nDatabase: Files table, ImportHistory table\nDocs: atomic-design-system.md (Section 6.2), user-flow.md (UF-001)\n\nImplementation:\n1. Create DropZone molecule with drag states\n2. Implement file format validation (.mp4, .mov, .avi, .mkv)\n3. Add visual feedback during drag operations\n4. Create Tauri command for file import\n5. Save file metadata to database\n6. Update import history\n7. Handle errors with user feedback\n\nSuccess Criteria:\n- Files drop with visual feedback\n- Format validation prevents invalid files\n- <500ms response time per file\n- Error messages display appropriately",
+        "acceptanceCriteria": "- Drag-and-drop works on macOS\n- Only valid video formats accepted\n- Visual feedback matches UF-001\n- Files saved to database with metadata",
+        "testStrategy": "E2E tests for drag-drop, unit tests for validation, performance benchmarks",
+        "effort": 3,
+        "tags": [
+          "frontend",
+          "file-management",
+          "day1"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "6",
+        "title": "Create File Import Progress Tracking",
+        "description": "Implement progress tracking for file imports including batch operations and queue management",
+        "status": "pending",
+        "priority": "medium",
+        "assignedTo": "",
+        "dependencies": [
+          "5"
+        ],
+        "subtasks": [],
+        "details": "References: FR-003, FR-007, UF-001\nComponents: ProgressIndicator (molecule), FileItem (molecule)\nDatabase: Files table, ImportQueue\n\nImplementation:\n1. Build ProgressIndicator molecule\n2. Create import queue in Rust backend\n3. Implement progress events via Tauri\n4. Update UI with real-time progress\n5. Handle batch imports efficiently\n6. Add cancel functionality\n\nSuccess Criteria:\n- Progress updates in real-time\n- Batch imports show overall progress\n- Queue management prevents overload\n- Cancel stops current import",
+        "acceptanceCriteria": "- Progress bar shows accurate status\n- Multiple files import in queue\n- UI remains responsive during import\n- Cancel cleanly stops operation",
+        "testStrategy": "Integration tests for progress events, performance tests for large batches",
+        "effort": 2,
+        "tags": [
+          "frontend",
+          "backend",
+          "file-management",
+          "day1"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "7",
+        "title": "Implement FFmpeg Video Analysis",
+        "description": "Integrate FFmpeg to extract video metadata including duration, resolution, codec, and generate thumbnails",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "5"
+        ],
+        "subtasks": [],
+        "details": "References: FR-011, FR-012, FR-013, UF-002\nComponents: MetadataDisplay (molecule), Thumbnail (atom)\nDatabase: Files table, FileMetadata\n\nImplementation:\n1. Integrate FFmpeg in Rust backend\n2. Extract video metadata (duration, resolution, codec)\n3. Generate thumbnail at 10-second mark\n4. Store metadata in database\n5. Create MetadataDisplay molecule\n6. Handle FFmpeg errors gracefully\n\nSuccess Criteria:\n- Metadata extracted within 2 seconds\n- Thumbnails generated consistently\n- All metadata fields populated\n- Errors don't crash application",
+        "acceptanceCriteria": "- FFmpeg processes all video formats\n- <2s analysis time per video\n- Thumbnails display correctly\n- Metadata saves to database",
+        "testStrategy": "Unit tests with sample videos, performance benchmarks, error case testing",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "video-processing",
+          "day2"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "8",
+        "title": "Build Smart Video Organization System",
+        "description": "Create automated organization system that categorizes videos by orientation, date, and content type",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "7"
+        ],
+        "subtasks": [],
+        "details": "References: FR-014, FR-015, FR-016, FR-017, UF-002\nComponents: OrganizationPanel (organism), FolderTree (molecule)\nDatabase: Folders table, Files table\n\nImplementation:\n1. Create folder structure algorithm\n2. Detect video orientation (vertical/horizontal)\n3. Organize by creation date (year/month)\n4. Implement content type detection\n5. Build FolderTree UI component\n6. Add preference learning system\n7. Create organization rules engine\n\nSuccess Criteria:\n- Videos auto-organize on import\n- Folder structure is intuitive\n- Preferences adapt to user behavior\n- UI shows organization clearly",
+        "acceptanceCriteria": "- Organization happens automatically\n- Folder structure matches FR specs\n- User can customize organization\n- Bulk reorganization works",
+        "testStrategy": "Unit tests for organization logic, integration tests for file operations",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "organization",
+          "day2"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "9",
+        "title": "Implement Descript OAuth 2.0 Authentication",
+        "description": "Create secure OAuth 2.0 flow for Descript integration with PKCE and token storage",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "1"
+        ],
+        "subtasks": [],
+        "details": "References: FR-021, FR-022, UF-003\nComponents: AuthCard (molecule), StatusIndicator (atom)\nDatabase: DescriptAuth table\n\nImplementation:\n1. Set up OAuth 2.0 with PKCE flow\n2. Create auth callback handler\n3. Implement secure token storage\n4. Build AuthCard UI component\n5. Add token refresh logic\n6. Handle auth errors gracefully\n\nSuccess Criteria:\n- OAuth flow completes successfully\n- Tokens stored securely\n- Auto-refresh before expiry\n- Clear error messages for failures",
+        "acceptanceCriteria": "- Descript auth works end-to-end\n- Tokens encrypted in storage\n- Refresh happens automatically\n- User feedback for all states",
+        "testStrategy": "Integration tests with Descript API, security audit of token storage",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "authentication",
+          "integration",
+          "day2"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "10",
+        "title": "Create Descript Batch Upload System",
+        "description": "Implement batch upload functionality for sending videos to Descript with progress tracking and error handling",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "9"
+        ],
+        "subtasks": [],
+        "details": "References: FR-023, FR-024, FR-025, FR-026, UF-003\nComponents: UploadProgress (molecule), ProjectList (organism)\nDatabase: DescriptProjects, UploadQueue\n\nImplementation:\n1. Create batch upload queue (20 file limit)\n2. Implement project naming patterns\n3. Add upload progress tracking\n4. Build retry logic with exponential backoff\n5. Create UploadProgress UI component\n6. Handle network interruptions\n7. Track upload history\n\nSuccess Criteria:\n- Batch uploads work reliably\n- Progress shows for each file\n- Failed uploads retry automatically\n- 20 file limit enforced",
+        "acceptanceCriteria": "- Uploads complete successfully\n- Progress accurate to 5%\n- Retries work with backoff\n- Errors shown clearly",
+        "testStrategy": "Integration tests with Descript API, network failure simulations",
+        "effort": 4,
+        "tags": [
+          "backend",
+          "integration",
+          "upload",
+          "day2"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "11",
+        "title": "Build Transcript Auto-Import System",
+        "description": "Create system to monitor Descript export folder and automatically import completed transcripts",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "10"
+        ],
+        "subtasks": [],
+        "details": "References: FR-027, FR-028, FR-029, UF-004\nComponents: StatusIndicator (atom), NotificationToast (molecule)\nDatabase: Transcripts table, DescriptProjects\n\nImplementation:\n1. Set up file system watcher\n2. Monitor Descript export folder\n3. Detect new transcript files\n4. Parse and import transcript data\n5. Link to original video file\n6. Update project tracking\n7. Show import notifications\n\nSuccess Criteria:\n- Auto-import within 5 seconds\n- Correct linking to source video\n- No duplicate imports\n- User notified of imports",
+        "acceptanceCriteria": "- Folder monitoring works reliably\n- Transcripts import automatically\n- Database relationships maintained\n- Notifications appear on import",
+        "testStrategy": "Integration tests with file system, unit tests for parsing logic",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "integration",
+          "import",
+          "day3"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "12",
+        "title": "Implement Full-Text Transcript Search",
+        "description": "Create fast full-text search across all transcripts using SQLite FTS5 with highlighting",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "11"
+        ],
+        "subtasks": [],
+        "details": "References: FR-031, FR-032, UF-005\nComponents: SearchBar (molecule), SearchResults (organism)\nDatabase: Transcripts table with FTS5\n\nImplementation:\n1. Set up SQLite FTS5 index\n2. Create search query parser\n3. Implement search ranking\n4. Add result highlighting\n5. Build SearchBar component\n6. Create SearchResults display\n7. Optimize for <200ms results\n\nSuccess Criteria:\n- Search returns in <200ms\n- Results ranked by relevance\n- Search terms highlighted\n- Works with partial matches",
+        "acceptanceCriteria": "- FTS5 index created properly\n- Search performance <200ms\n- Highlighting works correctly\n- Relevance ranking accurate",
+        "testStrategy": "Performance benchmarks, search accuracy tests, UI interaction tests",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "search",
+          "database",
+          "day3"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "13",
+        "title": "Create Advanced Search Filters",
+        "description": "Build filter system for search including date ranges, duration, tags, and sorting options",
+        "status": "pending",
+        "priority": "medium",
+        "assignedTo": "",
+        "dependencies": [
+          "12"
+        ],
+        "subtasks": [],
+        "details": "References: FR-033, FR-034, UF-005\nComponents: FilterPanel (molecule), Tag (atom)\nDatabase: Transcripts, Tags, TranscriptTags\n\nImplementation:\n1. Create FilterPanel UI component\n2. Add date range picker\n3. Implement duration filters\n4. Build tag selection system\n5. Add sort options (relevance, date, score)\n6. Create filter state management\n7. Optimize filtered queries\n\nSuccess Criteria:\n- All filters work together\n- Results update instantly\n- Filter state persists\n- Clear filter option available",
+        "acceptanceCriteria": "- Multiple filters combine correctly\n- Performance remains <200ms\n- UI clearly shows active filters\n- Results accurate to filters",
+        "testStrategy": "Integration tests for filter combinations, performance tests",
+        "effort": 2,
+        "tags": [
+          "frontend",
+          "search",
+          "filters",
+          "day3"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "14",
+        "title": "Implement AI-Powered Tag Extraction",
+        "description": "Create system to automatically extract relevant tags from transcript content using AI",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "11"
+        ],
+        "subtasks": [],
+        "details": "References: FR-035, FR-036\nComponents: Tag (atom), ScoreBadge (atom)\nDatabase: Tags, TranscriptTags tables\n\nImplementation:\n1. Integrate AI API for tag extraction\n2. Create tag extraction algorithm\n3. Build content scoring system\n4. Calculate Thread/Carousel/Blog potential\n5. Store tags in database\n6. Create tag management system\n7. Display tags and scores in UI\n\nSuccess Criteria:\n- Tags extracted automatically\n- Scores reflect content potential\n- Tags are relevant and useful\n- System handles API failures",
+        "acceptanceCriteria": "- AI extracts 5-10 relevant tags\n- Content scores calculated\n- Tags stored with relationships\n- UI displays tags clearly",
+        "testStrategy": "Integration tests with AI API, tag relevance validation",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "ai",
+          "tagging",
+          "day3"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "15",
+        "title": "Build Transcript Library UI",
+        "description": "Create the complete transcript library interface with cards, grid layout, and interactions",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "12",
+          "13",
+          "14"
+        ],
+        "subtasks": [],
+        "details": "References: FR-037, FR-038, FR-039, UF-005\nComponents: TranscriptCard (organism), TranscriptGrid (organism), DashboardGrid (template)\nDatabase: Transcripts table\n\nImplementation:\n1. Build TranscriptCard with all info\n2. Create responsive grid layout\n3. Add hover preview functionality\n4. Implement multi-selection\n5. Build related transcript display\n6. Add batch action buttons\n7. Create empty state design\n\nSuccess Criteria:\n- Cards display all transcript info\n- Grid responsive on all screens\n- Multi-selection works smoothly\n- Related transcripts shown",
+        "acceptanceCriteria": "- Library loads quickly\n- Cards show metadata clearly\n- Selection state obvious\n- Batch actions available",
+        "testStrategy": "UI component tests, responsive design tests, interaction tests",
+        "effort": 3,
+        "tags": [
+          "frontend",
+          "ui",
+          "library",
+          "day3"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "16",
+        "title": "Set Up LangGraph for Content Generation",
+        "description": "Initialize LangGraph workflow system for AI-powered content generation with proper configuration",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "1"
+        ],
+        "subtasks": [],
+        "details": "References: FR-043, system-architecture.md\nComponents: N/A (backend infrastructure)\nDatabase: N/A\n\nImplementation:\n1. Install LangGraph dependencies\n2. Create workflow configuration\n3. Set up AI provider connections\n4. Build workflow templates\n5. Create error handling\n6. Add logging system\n7. Test workflow execution\n\nSuccess Criteria:\n- LangGraph workflows execute\n- AI providers connected\n- Errors handled gracefully\n- Workflows are modular",
+        "acceptanceCriteria": "- Basic workflow runs successfully\n- Configuration is flexible\n- Errors don't crash system\n- Logs capture workflow steps",
+        "testStrategy": "Integration tests with LangGraph, workflow execution tests",
+        "effort": 2,
+        "tags": [
+          "backend",
+          "ai",
+          "infrastructure",
+          "day3"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "system-architecture.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "17",
+        "title": "Create Content Generation UI",
+        "description": "Build the content studio interface for selecting transcripts and generating content with templates",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "15",
+          "16"
+        ],
+        "subtasks": [],
+        "details": "References: FR-041, FR-042, FR-044, UF-006\nComponents: ContentEditor (organism), TemplateSelector (molecule), StudioLayout (template)\nDatabase: GeneratedContent, Templates\n\nImplementation:\n1. Build multi-transcript selector\n2. Create template selection UI\n3. Add platform-specific options\n4. Build ContentEditor component\n5. Show generation progress\n6. Display AI suggestions\n7. Create studio layout\n\nSuccess Criteria:\n- Multiple transcripts selectable\n- Templates clearly organized\n- Generation process visible\n- Editor supports all platforms",
+        "acceptanceCriteria": "- Transcript selection intuitive\n- Templates load correctly\n- Generation completes <30s\n- Editor shows constraints",
+        "testStrategy": "UI interaction tests, template loading tests, generation flow tests",
+        "effort": 4,
+        "tags": [
+          "frontend",
+          "ui",
+          "content-generation",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "18",
+        "title": "Implement Platform-Specific Content Constraints",
+        "description": "Add real-time validation for platform-specific constraints like character limits and formatting rules",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "17"
+        ],
+        "subtasks": [],
+        "details": "References: FR-045, FR-046, UF-006\nComponents: ConstraintIndicator (molecule), CharacterCount (atom)\nDatabase: Templates table\n\nImplementation:\n1. Define platform constraints\n2. Create validation system\n3. Build ConstraintIndicator UI\n4. Add character counting\n5. Show formatting warnings\n6. Suggest optimizations\n7. Update in real-time\n\nSuccess Criteria:\n- Constraints shown clearly\n- Validation happens instantly\n- Suggestions are helpful\n- All platforms supported",
+        "acceptanceCriteria": "- Character limits enforced\n- Format rules validated\n- Visual feedback immediate\n- Suggestions improve content",
+        "testStrategy": "Unit tests for validation logic, UI feedback tests",
+        "effort": 2,
+        "tags": [
+          "frontend",
+          "validation",
+          "content-generation",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "19",
+        "title": "Create Auto-Save and Version History",
+        "description": "Implement automatic saving of drafts every 30 seconds with full version history",
+        "status": "pending",
+        "priority": "medium",
+        "assignedTo": "",
+        "dependencies": [
+          "17"
+        ],
+        "subtasks": [],
+        "details": "References: FR-047, FR-048\nComponents: VersionHistory (molecule)\nDatabase: ContentVersions table\n\nImplementation:\n1. Create auto-save timer\n2. Implement draft storage\n3. Build version tracking\n4. Add version comparison\n5. Create restore functionality\n6. Show save status indicator\n7. Handle conflicts\n\nSuccess Criteria:\n- Saves every 30 seconds\n- No data loss on crash\n- Version history accessible\n- Restore works reliably",
+        "acceptanceCriteria": "- Auto-save works silently\n- Versions timestamped\n- Comparison shows differences\n- Restore is one-click",
+        "testStrategy": "Timer tests, data persistence tests, version restore tests",
+        "effort": 2,
+        "tags": [
+          "frontend",
+          "backend",
+          "versioning",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "20",
+        "title": "Build Export System",
+        "description": "Create comprehensive export functionality for all platforms with appropriate formats",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "17"
+        ],
+        "subtasks": [],
+        "details": "References: FR-051, FR-052, FR-053, UF-007\nComponents: ExportModal (organism), ExportOptions (molecule)\nDatabase: ExportHistory table\n\nImplementation:\n1. Create export format handlers\n2. Build PNG export for Instagram\n3. Add text export with formatting\n4. Create ZIP for bulk exports\n5. Track export history\n6. Add clipboard copy\n7. Show export preview\n\nSuccess Criteria:\n- All formats export correctly\n- Bulk export creates valid ZIP\n- History tracks all exports\n- Preview matches export",
+        "acceptanceCriteria": "- PNG exports are high quality\n- Text formatting preserved\n- ZIP structure logical\n- Export completes quickly",
+        "testStrategy": "Export format validation, file generation tests, history tracking tests",
+        "effort": 3,
+        "tags": [
+          "frontend",
+          "backend",
+          "export",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "21",
+        "title": "Create Settings Panel",
+        "description": "Build comprehensive settings interface for API keys, preferences, and usage tracking",
+        "status": "pending",
+        "priority": "medium",
+        "assignedTo": "",
+        "dependencies": [
+          "1"
+        ],
+        "subtasks": [],
+        "details": "References: FR-055, FR-056, FR-057, FR-059\nComponents: SettingsPanel (organism), APIKeyForm (molecule), SettingsLayout (template)\nDatabase: Settings, APIKeys tables\n\nImplementation:\n1. Create settings UI layout\n2. Build API key management\n3. Add key validation\n4. Create brand voice settings\n5. Show usage statistics\n6. Add preference controls\n7. Implement secure storage\n\nSuccess Criteria:\n- API keys stored securely\n- Validation prevents bad keys\n- Usage stats display clearly\n- Settings persist properly",
+        "acceptanceCriteria": "- Settings UI is intuitive\n- API keys encrypted\n- Stats update real-time\n- Changes save automatically",
+        "testStrategy": "Security tests for key storage, UI interaction tests, persistence tests",
+        "effort": 3,
+        "tags": [
+          "frontend",
+          "settings",
+          "security",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "22",
+        "title": "Implement Error Handling and User Feedback",
+        "description": "Create comprehensive error handling system with clear user feedback for all operations",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "1"
+        ],
+        "subtasks": [],
+        "details": "References: FR-009, FR-026, general UX requirements\nComponents: NotificationToast (molecule), ErrorBoundary\nDatabase: N/A\n\nImplementation:\n1. Create global error handler\n2. Build notification system\n3. Add error boundaries\n4. Create error messages catalog\n5. Implement retry mechanisms\n6. Add loading states\n7. Create offline detection\n\nSuccess Criteria:\n- No unhandled errors\n- Users understand issues\n- Recovery options provided\n- App remains stable",
+        "acceptanceCriteria": "- All errors caught properly\n- Messages are helpful\n- Retry options work\n- UI never breaks",
+        "testStrategy": "Error injection tests, user feedback validation, stability tests",
+        "effort": 3,
+        "tags": [
+          "frontend",
+          "backend",
+          "error-handling",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "23",
+        "title": "Performance Optimization and Testing",
+        "description": "Optimize application performance to meet all specified targets and create comprehensive test suite",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22"
+        ],
+        "subtasks": [],
+        "details": "References: All performance requirements from FRs\nComponents: All components\nDatabase: Query optimization\n\nImplementation:\n1. Profile application performance\n2. Optimize database queries\n3. Add caching where needed\n4. Minimize bundle size\n5. Create performance tests\n6. Add monitoring\n7. Document bottlenecks\n\nSuccess Criteria:\n- <500ms file import\n- <2s video analysis  \n- <30s content generation\n- <200ms search results",
+        "acceptanceCriteria": "- All performance targets met\n- Tests validate performance\n- Monitoring shows metrics\n- No performance regressions",
+        "testStrategy": "Performance benchmarks, load testing, profiling analysis",
+        "effort": 3,
+        "tags": [
+          "performance",
+          "testing",
+          "optimization",
+          "day4"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "24",
+        "title": "Create Onboarding Flow",
+        "description": "Build initial setup wizard to guide users through API key configuration and first import",
+        "status": "pending",
+        "priority": "medium",
+        "assignedTo": "",
+        "dependencies": [
+          "21"
+        ],
+        "subtasks": [],
+        "details": "References: General UX requirements\nComponents: OnboardingWizard (organism), StepIndicator (molecule)\nDatabase: Settings table\n\nImplementation:\n1. Create welcome screen\n2. Build API key setup step\n3. Add Descript auth step\n4. Create first import guide\n5. Show feature highlights\n6. Add skip option\n7. Remember completion\n\nSuccess Criteria:\n- New users guided smoothly\n- Setup is quick and clear\n- Can skip if desired\n- Only shows once",
+        "acceptanceCriteria": "- Onboarding is helpful\n- Steps are clear\n- Progress shown visually\n- Completion tracked",
+        "testStrategy": "User flow tests, first-run experience validation",
+        "effort": 2,
+        "tags": [
+          "frontend",
+          "ux",
+          "onboarding",
+          "day4"
+        ],
+        "relatedDocs": [
+          "user-flow.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "25",
+        "title": "Final Polish and Release Preparation",
+        "description": "Complete final UI polish, bug fixes, and prepare application for release",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "23",
+          "24"
+        ],
+        "subtasks": [],
+        "details": "References: All requirements\nComponents: All components\nDatabase: Final migrations\n\nImplementation:\n1. Fix all known bugs\n2. Polish UI animations\n3. Update all documentation\n4. Create release build\n5. Test on fresh install\n6. Package for distribution\n7. Create release notes\n\nSuccess Criteria:\n- No critical bugs\n- UI feels polished\n- App installs cleanly\n- All features working",
+        "acceptanceCriteria": "- Release build works\n- Fresh install succeeds\n- No console errors\n- Performance optimal",
+        "testStrategy": "Full regression testing, fresh install validation, release checklist",
+        "effort": 2,
+        "tags": [
+          "release",
+          "polish",
+          "testing",
+          "day4"
+        ],
+        "relatedDocs": [
+          "all"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "createdAt": "2025-01-07T12:00:00Z",
+      "updatedAt": "2025-01-07T12:00:00Z",
+      "projectName": "ContentFlow",
+      "totalTasks": 25,
+      "tasksPerDay": {
+        "day1": 6,
+        "day2": 5,
+        "day3": 7,
+        "day4": 7
+      }
+    }
+  }
+}
