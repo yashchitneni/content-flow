@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Emitter};
 use rand::{thread_rng, RngCore};
 use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
@@ -40,8 +40,8 @@ pub struct DescriptAuth {
 
 #[derive(Debug, Serialize)]
 pub struct AuthError {
-    message: String,
-    code: String,
+    pub message: String,
+    pub code: String,
 }
 
 impl DescriptAuth {
@@ -75,14 +75,20 @@ impl DescriptAuth {
     pub fn get_auth_url(&self, state: &str) -> (String, String) {
         let (verifier, challenge) = Self::generate_pkce_challenge();
         
+        let redirect_uri = REDIRECT_URI.to_string();
+        let response_type = "code".to_string();
+        let scopes = SCOPES.to_string();
+        let state_str = state.to_string();
+        let challenge_method = "S256".to_string();
+        
         let params = vec![
             ("client_id", &self.client_id),
-            ("redirect_uri", &REDIRECT_URI.to_string()),
-            ("response_type", &"code".to_string()),
-            ("scope", &SCOPES.to_string()),
-            ("state", &state.to_string()),
+            ("redirect_uri", &redirect_uri),
+            ("response_type", &response_type),
+            ("scope", &scopes),
+            ("state", &state_str),
             ("code_challenge", &challenge),
-            ("code_challenge_method", &"S256".to_string()),
+            ("code_challenge_method", &challenge_method),
         ];
         
         let mut url = String::from(DESCRIPT_AUTH_URL);
@@ -306,10 +312,10 @@ impl DescriptAuth {
     
     // Store encrypted tokens
     pub fn store_tokens(app: &AppHandle, encrypted: &str) -> Result<(), AuthError> {
-        let storage_dir = app.path_resolver()
+        let storage_dir = app.path()
             .app_data_dir()
-            .ok_or_else(|| AuthError {
-                message: "Failed to get app data directory".to_string(),
+            .map_err(|e| AuthError {
+                message: format!("Failed to get app data directory: {}", e),
                 code: "STORAGE_ERROR".to_string(),
             })?;
         
@@ -331,10 +337,10 @@ impl DescriptAuth {
     
     // Retrieve stored tokens
     pub fn get_stored_tokens(app: &AppHandle) -> Result<String, AuthError> {
-        let storage_dir = app.path_resolver()
+        let storage_dir = app.path()
             .app_data_dir()
-            .ok_or_else(|| AuthError {
-                message: "Failed to get app data directory".to_string(),
+            .map_err(|e| AuthError {
+                message: format!("Failed to get app data directory: {}", e),
                 code: "STORAGE_ERROR".to_string(),
             })?;
         
@@ -348,10 +354,10 @@ impl DescriptAuth {
     
     // Clear stored tokens (logout)
     pub fn clear_tokens(app: &AppHandle) -> Result<(), AuthError> {
-        let storage_dir = app.path_resolver()
+        let storage_dir = app.path()
             .app_data_dir()
-            .ok_or_else(|| AuthError {
-                message: "Failed to get app data directory".to_string(),
+            .map_err(|e| AuthError {
+                message: format!("Failed to get app data directory: {}", e),
                 code: "STORAGE_ERROR".to_string(),
             })?;
         
@@ -399,7 +405,7 @@ impl TokenRefreshManager {
                         DescriptAuth::store_tokens(&self.app, &encrypted)?;
                         
                         // Emit event to notify frontend
-                        self.app.emit_all("auth-refreshed", &new_tokens.expires_at)
+                        self.app.emit("auth-refreshed", &new_tokens.expires_at)
                             .map_err(|e| AuthError {
                                 message: format!("Failed to emit refresh event: {}", e),
                                 code: "EVENT_ERROR".to_string(),
