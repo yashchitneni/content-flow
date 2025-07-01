@@ -5,7 +5,18 @@ export type IconName =
   | 'info-circle'
   | 'x'
   | 'refresh'
-  | 'alert-triangle';
+  | 'alert-triangle'
+  | 'key'
+  | 'eye'
+  | 'eye-slash'
+  | 'settings'
+  | 'folder'
+  | 'palette'
+  | 'chart'
+  | 'api'
+  | 'brain'
+  | 'robot'
+  | 'database';
 
 export interface IconProps {
   name: IconName;
