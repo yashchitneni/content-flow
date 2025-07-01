@@ -31,27 +31,43 @@ Emphasis on automation over manual configuration
 3. Architectural Overview & Context Diagram
 ContentFlow follows a Simplified Event-Driven Architecture with clear separation between the Rust backend (system operations) and React frontend (user interface), connected via Tauri's IPC bridge.
 Context Diagram:
-                            ContentFlow System (macOS)
-    ┌─────────────────────────────────────────────────────────────────┐
-    │                                                                 │
-    │  ┌─────────────┐     ┌──────────────┐     ┌───────────────┐   │
-    │  │   Import    │────▶│  Transcript  │────▶│   Content     │   │
-    │  │  & Organize │     │   Library    │     │   Studio      │   │
-    │  └─────────────┘     └──────────────┘     └───────────────┘   │
-    │         │                    │                     │           │
-    │         ▼                    ▼                     ▼           │
-    │  ┌─────────────┐     ┌──────────────┐     ┌───────────────┐   │
-    │  │  Descript   │     │  LangGraph   │     │    Export     │   │
-    │  │ Integration │     │  Workflows   │     │   Manager     │   │
-    │  └─────────────┘     └──────────────┘     └───────────────┘   │
-    │                                                                 │
-    └─────────────────────────────────────────────────────────────────┘
-                        │          │          │
-                        ▼          ▼          ▼
-                 ┌──────────┐ ┌─────────┐ ┌────────────┐
-                 │ Descript │ │ OpenAI/ │ │ User Files │
-                 │   API    │ │ Claude  │ │ (~/Content)│
-                 └──────────┘ └─────────┘ └────────────┘
+
+```mermaid
+graph TB
+    subgraph "ContentFlow System (macOS)"
+        IM[Import & Organize]
+        TL[Transcript Library]
+        CS[Content Studio]
+        DI[Descript Integration]
+        LG[LangGraph Workflows]
+        EM[Export Manager]
+        
+        IM --> TL
+        TL --> CS
+        IM --> DI
+        TL --> LG
+        CS --> EM
+    end
+    
+    subgraph "External Services"
+        DAPI[Descript API]
+        AI[OpenAI/Claude]
+    end
+    
+    subgraph "User Actions"
+        ME[Manual Export from Descript]
+    end
+    
+    UF[User Files<br/>(~/Content)] --> IM
+    DI -->|Upload Files| DAPI
+    DAPI -.->|Requires Manual Export| ME
+    ME -->|Export to Folder| TL
+    LG --> AI
+    EM --> UF
+    
+    style ME fill:#ff9999,stroke:#ff0000,stroke-width:2px
+    style DAPI fill:#ffcc99,stroke:#ff6600,stroke-width:2px
+```
 4. Component Breakdown and Interaction
 Simplified Component Architecture:
 ContentFlow.app
@@ -93,9 +109,10 @@ Smart organization by date/orientation/type
 
 Descript Integration (Rust)
 
-Batch upload to Descript projects
-Export folder monitoring
-Transcript retrieval and storage
+Batch upload to Descript projects via API
+Monitor designated export folder for manually exported transcripts
+Automatic import when transcript files are detected
+Note: Due to API limitations, transcripts must be manually exported from Descript
 
 
 LangGraph Orchestration (JavaScript)
@@ -114,10 +131,20 @@ Real-time preview and editing
 
 
 Simplified Interaction Flow:
-User → Import Videos → Analyze & Organize → Upload to Descript
-                                                    │
-                                                    ▼
-Export Manager ← Content Studio ← LangGraph ← Transcript Library
+
+```mermaid
+flowchart LR
+    U[User] --> IV[Import Videos]
+    IV --> AO[Analyze & Organize]
+    AO --> UD[Upload to Descript]
+    UD --> ME{Manual Export<br/>Required}
+    ME -->|User exports<br/>from Descript| TL[Transcript Library]
+    TL --> LG[LangGraph]
+    LG --> CS[Content Studio]
+    CS --> EM[Export Manager]
+    
+    style ME fill:#ffcc99,stroke:#ff6600,stroke-width:2px,color:#000
+```
 5. Data Architecture Overview
 Streamlined Data Storage:
 
@@ -196,19 +223,63 @@ Key macOS Integrations:
 
 Native file dialogs via macOS APIs
 Dock badge for background progress
-macOS notifications for workflow completion
+macOS notifications for workflow completion (including when manual Descript export is needed)
 Quick Look preview support
 Native menu bar with keyboard shortcuts
+File system watcher for Descript export folder monitoring
 
 Simplified Workflow Execution:
-1. Import Phase
-   User drags videos → FFmpeg analysis → Smart organization
 
-2. Transcription Phase  
-   Batch upload to Descript → User edits in Descript → Export transcripts
+```mermaid
+stateDiagram-v2
+    [*] --> Import
+    
+    state Import {
+        [*] --> DragVideos: User drags video files
+        DragVideos --> FFmpegAnalysis: Automatic
+        FFmpegAnalysis --> SmartOrganization: Extract metadata
+        SmartOrganization --> [*]: Files organized
+    }
+    
+    Import --> Transcription
+    
+    state Transcription {
+        [*] --> BatchUpload: Upload to Descript API
+        BatchUpload --> CloudProcessing: Descript transcribes
+        CloudProcessing --> ManualExport: User opens Descript
+        ManualExport --> ExportToFolder: User exports transcript
+        ExportToFolder --> AutoDetect: ContentFlow monitors folder
+        AutoDetect --> [*]: Transcript imported
+        
+        note right of ManualExport
+            API Limitation:
+            Manual export required
+            from Descript UI
+        end note
+    }
+    
+    Transcription --> ContentCreation
+    
+    state ContentCreation {
+        [*] --> SelectTranscripts: Choose source material
+        SelectTranscripts --> LangGraphAnalysis: AI processing
+        LangGraphAnalysis --> GenerateContent: Create social content
+        GenerateContent --> Export: Save/Export
+        Export --> [*]: Content ready
+    }
+    
+    ContentCreation --> [*]
+```
 
-3. Content Creation Phase
-   Select transcripts → LangGraph analysis → Generate content → Export
+Key Points:
+1. **Import Phase**: Fully automated - User drags videos → FFmpeg analysis → Smart organization
 
-Each phase is independent and can run asynchronously
+2. **Transcription Phase**: 
+   - Automated: Batch upload to Descript via API
+   - Manual Step: User must export transcripts from Descript UI (API limitation)
+   - Automated: ContentFlow detects exported files and imports them
+
+3. **Content Creation Phase**: Fully automated - Select transcripts → LangGraph analysis → Generate content → Export
+
+⚠️ **Important**: Due to Descript API limitations, the transcription phase requires manual intervention. The API can only upload files; transcript export must be done manually through the Descript application.
 This streamlined architecture focuses on delivering a smooth, macOS-native experience while maintaining the intelligent workflow automation that makes ContentFlow powerful. The simplified approach ensures feasibility within the 4-day timeline while solving real content creation workflow problems.

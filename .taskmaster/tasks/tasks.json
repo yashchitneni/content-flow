@@ -55,7 +55,7 @@
         "id": "3",
         "title": "Create Design Token System",
         "description": "Implement the complete design token system with colors, typography, spacing, and animation values as defined in the atomic design system",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -245,8 +245,8 @@
       },
       {
         "id": "10",
-        "title": "Create Descript Batch Upload System",
-        "description": "Implement batch upload functionality for sending videos to Descript with progress tracking and error handling",
+        "title": "Create Descript Batch Upload System with Manual Export Notification",
+        "description": "Implement batch upload functionality for sending videos to Descript via API, with clear notification that manual export from Descript UI is required after cloud transcription completes",
         "status": "pending",
         "priority": "high",
         "assignedTo": "",
@@ -254,8 +254,8 @@
           "9"
         ],
         "subtasks": [],
-        "details": "References: FR-023, FR-024, FR-025, FR-026, UF-003\nComponents: UploadProgress (molecule), ProjectList (organism)\nDatabase: DescriptProjects, UploadQueue\n\nImplementation:\n1. Create batch upload queue (20 file limit)\n2. Implement project naming patterns\n3. Add upload progress tracking\n4. Build retry logic with exponential backoff\n5. Create UploadProgress UI component\n6. Handle network interruptions\n7. Track upload history\n\nSuccess Criteria:\n- Batch uploads work reliably\n- Progress shows for each file\n- Failed uploads retry automatically\n- 20 file limit enforced",
-        "acceptanceCriteria": "- Uploads complete successfully\n- Progress accurate to 5%\n- Retries work with backoff\n- Errors shown clearly",
+        "details": "References: FR-023, FR-024, FR-025, FR-026, UF-003\nComponents: UploadProgress (molecule), ProjectList (organism), ExportInstructions (molecule)\nDatabase: DescriptProjects, UploadQueue\n\n⚠️ IMPORTANT: Descript API Limitation - The API can only upload files and trigger cloud transcription. It CANNOT retrieve transcripts. Users must manually export from Descript UI.\n\nImplementation:\n1. Create batch upload queue (20 file limit)\n2. Implement project naming patterns\n3. Add upload progress tracking\n4. Upon completion, show 'Upload Complete - Manual Export Required' status\n5. Display clear instructions for manual export process\n6. Build retry logic with exponential backoff\n7. Create UI components for status and instructions\n8. Handle network interruptions\n9. Track upload history and export status\n\nSuccess Criteria:\n- Batch uploads work reliably\n- Progress shows for each file\n- Clear notification about manual export requirement\n- Instructions guide user through Descript export process\n- Failed uploads retry automatically\n- 20 file limit enforced",
+        "acceptanceCriteria": "- Uploads complete successfully\n- Progress accurate to 5%\n- 'Manual Export Required' status displayed clearly\n- Export instructions are easy to follow\n- Retries work with backoff\n- Errors shown clearly",
         "testStrategy": "Integration tests with Descript API, network failure simulations",
         "effort": 4,
         "tags": [
@@ -273,8 +273,8 @@
       },
       {
         "id": "11",
-        "title": "Build Transcript Auto-Import System",
-        "description": "Create system to monitor Descript export folder and automatically import completed transcripts",
+        "title": "Build Transcript Auto-Import System for Manual Descript Exports",
+        "description": "Create system to monitor designated export folder where users manually save Descript transcripts, then automatically import detected transcript files",
         "status": "pending",
         "priority": "high",
         "assignedTo": "",
@@ -282,7 +282,7 @@
           "10"
         ],
         "subtasks": [],
-        "details": "References: FR-027, FR-028, FR-029, UF-004\nComponents: StatusIndicator (atom), NotificationToast (molecule)\nDatabase: Transcripts table, DescriptProjects\n\nImplementation:\n1. Set up file system watcher\n2. Monitor Descript export folder\n3. Detect new transcript files\n4. Parse and import transcript data\n5. Link to original video file\n6. Update project tracking\n7. Show import notifications\n\nSuccess Criteria:\n- Auto-import within 5 seconds\n- Correct linking to source video\n- No duplicate imports\n- User notified of imports",
+        "details": "References: FR-026, FR-027, FR-028, FR-030, UF-004\nComponents: StatusIndicator (atom), NotificationToast (molecule), FolderStatus (molecule)\nDatabase: Transcripts table, DescriptProjects\n\n⚠️ CONTEXT: Since Descript API cannot retrieve transcripts, this system monitors a folder where users manually export transcript files from the Descript application.\n\nImplementation:\n1. Set up file system watcher for designated export folder\n2. Let user configure export folder path in settings\n3. Monitor folder for new .txt/.srt transcript files\n4. Validate transcript file format\n5. Parse and import transcript data\n6. Match transcript to original video file using filename patterns\n7. Update project tracking to show 'Transcript Imported'\n8. Show system notification when import detected\n9. Handle duplicate detection\n\nSuccess Criteria:\n- Auto-import within 5 seconds of file appearing\n- Correct linking to source video\n- No duplicate imports\n- User notified via system notification\n- Clear indication of monitored folder status",
         "acceptanceCriteria": "- Folder monitoring works reliably\n- Transcripts import automatically\n- Database relationships maintained\n- Notifications appear on import",
         "testStrategy": "Integration tests with file system, unit tests for parsing logic",
         "effort": 3,
