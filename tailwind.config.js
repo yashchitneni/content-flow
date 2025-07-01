@@ -56,6 +56,7 @@ export default {
           800: '#1F2937',
           900: '#111827',
         },
+        white: '#FFFFFF',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
@@ -83,6 +84,7 @@ export default {
         10: '40px',
         12: '48px',
         16: '64px',
+        modal: '32px',
       },
       borderRadius: {
         none: '0px',

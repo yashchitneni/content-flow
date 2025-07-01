@@ -16,7 +16,7 @@ export const ExportInstructions: React.FC<ExportInstructionsProps> = ({
       <div className="flex items-start">
         <div className="flex-shrink-0">
           <Icon 
-            name="AlertCircle" 
+            name="alert-circle" 
             className="w-6 h-6 text-yellow-600"
           />
         </div>
@@ -58,7 +58,7 @@ export const ExportInstructions: React.FC<ExportInstructionsProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={onOpenFolder}
-                  icon={<Icon name="FolderOpen" className="w-4 h-4" />}
+                  icon={<Icon name="folder-open" className="w-4 h-4" />}
                 >
                   Open Folder
                 </Button>

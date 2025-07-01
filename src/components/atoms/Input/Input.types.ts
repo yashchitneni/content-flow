@@ -7,6 +7,7 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void
   disabled?: boolean
   error?: boolean
+  variant?: string
   icon?: ReactNode
   maxLength?: number
   fullWidth?: boolean

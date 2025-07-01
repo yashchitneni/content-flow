@@ -41,6 +41,7 @@ const variantStyles = {
 }
 
 const sizeStyles = {
+  sm: 'h-7 px-2 text-xs gap-1 min-w-[56px]',
   small: 'h-8 px-3 text-sm gap-2 min-w-[64px]',
   medium: 'h-10 px-4 text-base gap-2 min-w-[80px]',
   large: 'h-12 px-6 text-lg gap-3 min-w-[96px]',
@@ -75,7 +76,7 @@ export const Button: React.FC<ButtonProps> = ({
   const combinedStyles = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyles} ${loadingStyles} ${className}`.trim()
 
   // Ensure minimum tap target size for touch devices
-  const touchTargetStyles = size === 'small' ? 'min-h-[44px] md:min-h-[32px]' : ''
+  const touchTargetStyles = (size === 'sm' || size === 'small') ? 'min-h-[44px] md:min-h-[32px]' : ''
 
   return (
     <button

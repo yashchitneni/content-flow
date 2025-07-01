@@ -11,12 +11,17 @@ export type IconName =
   | 'eye-slash'
   | 'settings'
   | 'folder'
+  | 'folder-open'
   | 'palette'
   | 'chart'
   | 'api'
   | 'brain'
   | 'robot'
-  | 'database';
+  | 'database'
+  | 'user'
+  | 'check'
+  | 'minus'
+  | 'upload';
 
 export interface IconProps {
   name: IconName;

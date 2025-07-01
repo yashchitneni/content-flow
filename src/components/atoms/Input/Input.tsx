@@ -8,6 +8,7 @@ export const Input: React.FC<InputProps> = ({
   onChange,
   disabled = false,
   error = false,
+  variant = 'default',
   icon,
   maxLength,
   fullWidth = false,
