@@ -1,6 +1,6 @@
 use crate::services::descript_auth::{AuthError, AuthState, AuthTokens, DescriptAuth};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager, Emitter, State};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -78,7 +78,7 @@ pub async fn handle_auth_callback(
         .map_err(|e| format!("Failed to store tokens: {}", e.message))?;
     
     // Emit auth success event
-    app.emit_all("auth-success", &tokens.expires_at)
+    app.emit("auth-success", &tokens.expires_at)
         .map_err(|e| format!("Failed to emit auth event: {}", e))?;
     
     // Return current auth state
@@ -138,7 +138,7 @@ pub async fn logout(
     DescriptAuth::clear_tokens(&app)
         .map_err(|e| format!("Failed to clear tokens: {}", e.message))?;
     
-    app.emit_all("auth-logout", ())
+    app.emit("auth-logout", ())
         .map_err(|e| format!("Failed to emit logout event: {}", e))?;
     
     Ok(())
