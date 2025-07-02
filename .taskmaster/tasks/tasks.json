@@ -108,7 +108,7 @@
         "id": "5",
         "title": "Implement Video File Drag-and-Drop Import",
         "description": "Create the drag-and-drop functionality for video file imports with format validation and visual feedback",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
