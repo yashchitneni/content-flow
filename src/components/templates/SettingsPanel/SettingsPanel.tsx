@@ -123,65 +123,47 @@ export const SettingsPanel: React.FC = () => {
   };
 
   const handleApiKeySave = async (service: string) => {
-    try {
-      const keyValue = apiKeyValues[service];
-      
-      console.log('Saving API key for service:', service);
-      console.log('Key value:', keyValue);
-      console.log('All key values:', apiKeyValues);
-      
-      if (!keyValue || keyValue.trim() === '') {
-        showToast({
-          title: 'Error',
-          description: 'Please enter a valid API key',
-          variant: 'error',
-        });
-        alert('❌ Please enter a valid API key');
-        return;
-      }
-      
-      // For demo - save to localStorage instead of Tauri
-      const currentKeys = localStorage.getItem('contentflow-api-keys');
-      const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
-      apiKeys[service] = keyValue;
-      localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
-      
-      console.log('Saved to localStorage:', apiKeys);
-      
-      // Immediately update local state without reloading
-      if (settings) {
-        const updatedApiKeys = settings.api_keys.map(key => 
-          key.service === service 
-            ? { ...key, is_set: true, created_at: new Date().toISOString() }
-            : key
-        );
-        setSettings({ ...settings, api_keys: updatedApiKeys });
-      }
-      
-      // Clear the input value
-      setApiKeyValues((prev) => ({ 
-        ...prev, 
-        [service]: ''
-      }));
-      
-      showToast({
-        title: 'Success',
-        description: `${service} API key saved successfully`,
-        variant: 'success',
-      });
-      
-      // Also show browser alert for demo
-      alert(`✅ ${service.toUpperCase()} API key saved successfully!\n\nYou can now use this key for content generation.`);
-      
-    } catch (error) {
-      console.error('Error saving API key:', error);
-      showToast({
-        title: 'Error',
-        description: `Failed to update ${service} API key`,
-        variant: 'error',
-      });
-      alert(`❌ Failed to save ${service} API key`);
+    const keyValue = apiKeyValues[service];
+    
+    console.log('Saving API key for service:', service);
+    
+    if (!keyValue || keyValue.trim() === '') {
+      throw new Error('Invalid API key');
     }
+    
+    // Save to localStorage
+    const currentKeys = localStorage.getItem('contentflow-api-keys');
+    const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
+    apiKeys[service] = keyValue;
+    localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
+    
+    console.log('Saved to localStorage:', apiKeys);
+    
+    // Update local state to show key is configured
+    setSettings((prev) => {
+      if (!prev) return prev;
+      
+      const updatedApiKeys = prev.api_keys.map(key => 
+        key.service === service 
+          ? { ...key, is_set: true, created_at: new Date().toISOString() }
+          : key
+      );
+      
+      return { ...prev, api_keys: updatedApiKeys };
+    });
+    
+    // Clear the input value after successful save
+    setApiKeyValues((prev) => ({ 
+      ...prev, 
+      [service]: ''
+    }));
+    
+    // Show success notifications
+    showToast({
+      title: 'Success',
+      description: `${service} API key saved successfully`,
+      variant: 'success',
+    });
   };
 
   const handleApiKeyRemove = async (service: string) => {

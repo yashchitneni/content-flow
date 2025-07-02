@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Input } from '../../atoms/Input';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icon';
@@ -21,6 +21,7 @@ export interface ApiKeyInputProps {
 }
 
 export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
+  service,
   label,
   value = '',
   isSet,
@@ -35,44 +36,44 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
   error,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(!isSet);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [tempValue, setTempValue] = useState('');
-
-  // Initialize editing state based on whether key is set
-  useEffect(() => {
-    console.log(`ApiKeyInput - isSet changed for ${label}:`, isSet);
-    setIsEditing(!isSet);
-    setTempValue('');
-  }, [isSet, label]);
 
   const handleEdit = () => {
     setIsEditing(true);
     setTempValue('');
-    onChange('');
+    onChange(''); // Clear parent state
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setTempValue('');
-    onChange('');
+    onChange(''); // Clear parent state
   };
 
   const handleSave = async () => {
-    if (onVerify) {
-      setIsVerifying(true);
-      const isValid = await onVerify();
-      setIsVerifying(false);
-      
-      if (!isValid) {
-        return;
-      }
+    if (!tempValue.trim()) {
+      alert('Please enter a valid API key');
+      return;
     }
+
+    setIsSaving(true);
     
-    console.log(`ApiKeyInput - Saving key for ${label}`);
-    await onSave();
-    console.log(`ApiKeyInput - Save complete for ${label}`);
-    // The parent will update isSet, which will trigger the useEffect
+    try {
+      // Call parent save function
+      await onSave();
+      
+      // If we get here, save was successful
+      // Exit editing mode
+      setIsEditing(false);
+      setTempValue('');
+    } catch (error) {
+      console.error('Error saving API key:', error);
+      alert('Failed to save API key. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,6 +85,11 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
   const toggleVisibility = () => {
     setIsVisible(!isVisible);
   };
+
+  // Show editing UI if:
+  // 1. Key is not set and we're not editing (first time setup)
+  // 2. User clicked "Update" button
+  const showEditingUI = !isSet || isEditing;
 
   return (
     <div className="space-y-2">
@@ -101,7 +107,7 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
         )}
       </div>
 
-      {isEditing ? (
+      {showEditingUI ? (
         <div className="space-y-2">
           <div className="relative">
             <Input
@@ -109,13 +115,14 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
               value={tempValue}
               onChange={handleChange}
               placeholder={placeholder}
-              disabled={disabled || isVerifying}
+              disabled={disabled || isSaving}
               variant={error ? 'error' : 'default'}
             />
             <button
               type="button"
               onClick={toggleVisibility}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+              disabled={isSaving}
             >
               <Icon name={isVisible ? 'eye-slash' : 'eye'} size="sm" />
             </button>
@@ -129,30 +136,36 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
             <Button
               size="small"
               onClick={handleSave}
-              disabled={!tempValue || isVerifying}
-              loading={isVerifying}
+              disabled={!tempValue.trim() || isSaving}
+              className={`${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isVerifying ? 'Verifying...' : 'Save'}
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
-            <Button
-              size="small"
-              variant="ghost"
-              onClick={handleCancel}
-              disabled={isVerifying}
-            >
-              Cancel
-            </Button>
+            {(isSet || isEditing) && (
+              <Button
+                size="small"
+                variant="ghost"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+            )}
             {isSet && (
               <Button
                 size="small"
                 variant="destructive"
                 onClick={onRemove}
-                disabled={isVerifying}
+                disabled={isSaving}
               >
                 Remove
               </Button>
             )}
           </div>
+          
+          {isSaving && (
+            <p className="text-sm text-gray-500 italic">Saving your API key...</p>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
