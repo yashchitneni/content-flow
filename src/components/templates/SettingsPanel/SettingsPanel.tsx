@@ -109,14 +109,8 @@ export const SettingsPanel: React.FC = () => {
       };
       
       setSettings(response);
-      // Show masked version of saved keys
-      const maskedKeys: Record<string, string> = {};
-      Object.keys(apiKeys).forEach(key => {
-        if (apiKeys[key]) {
-          maskedKeys[key] = apiKeys[key].substring(0, 7) + '•'.repeat(20);
-        }
-      });
-      setApiKeyValues(maskedKeys);
+      // Don't set masked values in state - keep state empty for configured keys
+      setApiKeyValues({});
     } catch (error) {
       showToast({
         title: 'Error',
@@ -132,12 +126,17 @@ export const SettingsPanel: React.FC = () => {
     try {
       const keyValue = apiKeyValues[service];
       
-      if (!keyValue || keyValue.includes('•')) {
+      console.log('Saving API key for service:', service);
+      console.log('Key value:', keyValue);
+      console.log('All key values:', apiKeyValues);
+      
+      if (!keyValue || keyValue.trim() === '') {
         showToast({
           title: 'Error',
           description: 'Please enter a valid API key',
           variant: 'error',
         });
+        alert('❌ Please enter a valid API key');
         return;
       }
       
@@ -146,6 +145,8 @@ export const SettingsPanel: React.FC = () => {
       const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
       apiKeys[service] = keyValue;
       localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
+      
+      console.log('Saved to localStorage:', apiKeys);
       
       // Update local state
       if (settings) {
@@ -166,17 +167,19 @@ export const SettingsPanel: React.FC = () => {
       // Also show browser alert for demo
       alert(`✅ ${service.toUpperCase()} API key saved successfully!\n\nYou can now use this key for content generation.`);
       
-      // Update the display to show masked version
+      // Clear the input after successful save
       setApiKeyValues((prev) => ({ 
         ...prev, 
-        [service]: keyValue.substring(0, 7) + '•'.repeat(20)
+        [service]: ''
       }));
     } catch (error) {
+      console.error('Error saving API key:', error);
       showToast({
         title: 'Error',
         description: `Failed to update ${service} API key`,
         variant: 'error',
       });
+      alert(`❌ Failed to save ${service} API key`);
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../../atoms/Input';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icon';
@@ -37,17 +37,24 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(!isSet);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [tempValue, setTempValue] = useState(value);
+  const [tempValue, setTempValue] = useState('');
+
+  // Initialize editing state based on whether key is set
+  useEffect(() => {
+    setIsEditing(!isSet);
+    setTempValue('');
+  }, [isSet]);
 
   const handleEdit = () => {
     setIsEditing(true);
     setTempValue('');
+    onChange('');
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setTempValue(value);
-    onChange(value);
+    setTempValue('');
+    onChange('');
   };
 
   const handleSave = async () => {
@@ -66,8 +73,9 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempValue(e.target.value);
-    onChange(e.target.value);
+    const newValue = e.target.value;
+    setTempValue(newValue);
+    onChange(newValue);
   };
 
   const toggleVisibility = () => {
