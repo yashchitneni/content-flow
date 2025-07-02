@@ -74,14 +74,12 @@ export const SettingsPanel: React.FC = () => {
     try {
       setLoading(true);
       
-      // For demo - use localStorage instead of Tauri
+      // For demo, load API keys from localStorage
       const savedKeys = localStorage.getItem('contentflow-api-keys');
       const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
       
-      // Mock settings response for demo
       const response: SettingsResponse = {
         api_keys: [
-          { service: 'descript', is_set: !!apiKeys.descript, created_at: new Date().toISOString() },
           { service: 'openai', is_set: !!apiKeys.openai, created_at: new Date().toISOString() },
           { service: 'claude', is_set: !!apiKeys.claude, created_at: new Date().toISOString() },
         ],
@@ -111,7 +109,14 @@ export const SettingsPanel: React.FC = () => {
       };
       
       setSettings(response);
-      setApiKeyValues(apiKeys);
+      // Show masked version of saved keys
+      const maskedKeys: Record<string, string> = {};
+      Object.keys(apiKeys).forEach(key => {
+        if (apiKeys[key]) {
+          maskedKeys[key] = apiKeys[key].substring(0, 7) + '•'.repeat(20);
+        }
+      });
+      setApiKeyValues(maskedKeys);
     } catch (error) {
       showToast({
         title: 'Error',
@@ -125,17 +130,28 @@ export const SettingsPanel: React.FC = () => {
 
   const handleApiKeySave = async (service: string) => {
     try {
+      const keyValue = apiKeyValues[service];
+      
+      if (!keyValue || keyValue.includes('•')) {
+        showToast({
+          title: 'Error',
+          description: 'Please enter a valid API key',
+          variant: 'error',
+        });
+        return;
+      }
+      
       // For demo - save to localStorage instead of Tauri
       const currentKeys = localStorage.getItem('contentflow-api-keys');
       const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
-      apiKeys[service] = apiKeyValues[service];
+      apiKeys[service] = keyValue;
       localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
       
       // Update local state
       if (settings) {
         const updatedApiKeys = settings.api_keys.map(key => 
           key.service === service 
-            ? { ...key, is_set: !!apiKeyValues[service] }
+            ? { ...key, is_set: true }
             : key
         );
         setSettings({ ...settings, api_keys: updatedApiKeys });
@@ -150,8 +166,11 @@ export const SettingsPanel: React.FC = () => {
       // Also show browser alert for demo
       alert(`✅ ${service.toUpperCase()} API key saved successfully!\n\nYou can now use this key for content generation.`);
       
-      setApiKeyValues((prev) => ({ ...prev, [service]: '' }));
-      await loadSettings();
+      // Update the display to show masked version
+      setApiKeyValues((prev) => ({ 
+        ...prev, 
+        [service]: keyValue.substring(0, 7) + '•'.repeat(20)
+      }));
     } catch (error) {
       showToast({
         title: 'Error',
@@ -163,12 +182,20 @@ export const SettingsPanel: React.FC = () => {
 
   const handleApiKeyRemove = async (service: string) => {
     try {
-      await invoke('remove_api_key', { service });
+      // For demo - remove from localStorage
+      const currentKeys = localStorage.getItem('contentflow-api-keys');
+      const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
+      delete apiKeys[service];
+      localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
+      
       showToast({
         title: 'Success',
         description: `${service} API key removed`,
         variant: 'success',
       });
+      
+      alert(`✅ ${service.toUpperCase()} API key removed successfully!`);
+      
       await loadSettings();
     } catch (error) {
       showToast({
@@ -439,11 +466,11 @@ export const SettingsPanel: React.FC = () => {
   ];
 
   const tabs = [
-    { id: 'api-keys' as SettingsTab, label: 'API Keys', icon: 'key' },
-    { id: 'preferences' as SettingsTab, label: 'Preferences', icon: 'settings' },
-    { id: 'file-organization' as SettingsTab, label: 'File Organization', icon: 'folder' },
-    { id: 'brand' as SettingsTab, label: 'Brand Settings', icon: 'palette' },
-    { id: 'usage' as SettingsTab, label: 'Usage Stats', icon: 'chart' },
+    { id: 'api-keys' as SettingsTab, label: 'API Keys', icon: 'key' as const },
+    { id: 'preferences' as SettingsTab, label: 'Preferences', icon: 'settings' as const },
+    { id: 'file-organization' as SettingsTab, label: 'File Organization', icon: 'folder' as const },
+    { id: 'brand' as SettingsTab, label: 'Brand Settings', icon: 'palette' as const },
+    { id: 'usage' as SettingsTab, label: 'Usage Stats', icon: 'chart' as const },
   ];
 
   return (
@@ -493,9 +520,9 @@ export const SettingsPanel: React.FC = () => {
                     createdAt={apiKeyInfo?.created_at}
                     lastUsed={apiKeyInfo?.last_used}
                     placeholder={service.placeholder}
-                    onChange={(value) =>
-                      setApiKeyValues((prev) => ({ ...prev, [service.id]: value }))
-                    }
+                    onChange={(value) => {
+                      setApiKeyValues((prev) => ({ ...prev, [service.id]: value }));
+                    }}
                     onSave={() => handleApiKeySave(service.id)}
                     onRemove={() => handleApiKeyRemove(service.id)}
                     onVerify={() => handleApiKeyVerify(service.id)}

@@ -105,8 +105,22 @@ export const ContentStudio: React.FC = () => {
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (e?: React.MouseEvent) => {
+    // Prevent any default form submission behavior
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (!selectedTemplate || availableTranscripts.length === 0) return;
+    
+    // Check if API key exists
+    const savedKeys = localStorage.getItem('contentflow-api-keys');
+    const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
+    
+    if (!apiKeys.openai) {
+      alert('⚠️ OpenAI API Key Required\n\nPlease add your OpenAI API key in Settings before generating content.\n\n1. Click "Settings" button\n2. Enter your OpenAI API key\n3. Click "Save"\n4. Return here to generate content');
+      return;
+    }
     
     setIsGenerating(true);
     
@@ -114,15 +128,11 @@ export const ContentStudio: React.FC = () => {
       // Import WorkflowOrchestrator dynamically
       const { default: WorkflowOrchestrator } = await import('../workflows');
       
-      // Get saved API keys from localStorage
-      const savedKeys = localStorage.getItem('contentflow-api-keys');
-      const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
-      
       // Initialize orchestrator with saved API key
       const orchestrator = new WorkflowOrchestrator({
         aiProvider: 'openai',
         apiKeys: {
-          openai: apiKeys.openai || process.env.OPENAI_API_KEY || 'demo-key',
+          openai: apiKeys.openai,
           anthropic: apiKeys.claude || process.env.ANTHROPIC_API_KEY,
         },
         logging: { level: 'info', format: 'pretty' }
@@ -333,6 +343,32 @@ export const ContentStudio: React.FC = () => {
                 </Button>
               </div>
             </div>
+            
+            {/* API Key Warning */}
+            {(() => {
+              const savedKeys = localStorage.getItem('contentflow-api-keys');
+              const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
+              if (!apiKeys.openai) {
+                return (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Icon name="alert-triangle" className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-yellow-800">
+                        <div className="font-medium mb-1">API Key Required</div>
+                        <div>Please add your OpenAI API key in Settings to generate content with AI.</div>
+                        <ol className="list-decimal list-inside mt-2 space-y-1">
+                          <li>Click "Settings" button in the top right</li>
+                          <li>Enter your OpenAI API key</li>
+                          <li>Click "Save"</li>
+                          <li>Return here to generate content</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 
