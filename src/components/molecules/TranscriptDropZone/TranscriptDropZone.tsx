@@ -40,28 +40,41 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
 
     if (disabled || isImporting) return;
 
-    // For now, we'll handle this as a placeholder - Tauri will provide full paths
-    setErrors(['Drag and drop functionality requires Tauri integration']);
+    // Demo mode - simulate successful file drop
+    const files = Array.from(e.dataTransfer.files);
+    const transcriptFiles = files.filter(file => 
+      acceptedFormats.some(format => file.name.toLowerCase().endsWith(format.replace('.', '')))
+    );
+    
+    if (transcriptFiles.length > 0) {
+      await processTranscripts(transcriptFiles.map(f => f.name));
+    } else {
+      setErrors(['Please drop valid transcript files (.txt, .srt, .vtt)']);
+    }
   };
 
-  const handleBrowseClick = async () => {
+  const handleBrowseClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (disabled || isImporting) return;
-
-    // Demo mode - simulate file selection
-    setIsProcessing(true);
-    setErrors([]);
-    setProgress(0);
     
-    // Simulate processing delay
-    setTimeout(() => {
-      setProgress(50);
-      setTimeout(() => {
-        setProgress(100);
-        onTranscriptsSelected?.(['demo-transcript-1.txt', 'demo-transcript-2.srt']);
-        setIsProcessing(false);
-        setProgress(0);
-      }, 500);
-    }, 1000);
+    // Trigger file input click
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const transcriptFiles = files.filter(file => 
+      acceptedFormats.some(format => file.name.toLowerCase().endsWith(format.replace('.', '')))
+    );
+    
+    if (transcriptFiles.length > 0) {
+      await processTranscripts(transcriptFiles.map(f => f.name));
+    } else {
+      setErrors(['Please select valid transcript files (.txt, .srt, .vtt)']);
+    }
+    
+    // Reset input
+    e.target.value = '';
   };
 
   const processTranscripts = async (filePaths: string[]) => {
@@ -126,7 +139,6 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={handleBrowseClick}
       >
         <input
           ref={fileInputRef}
@@ -134,7 +146,7 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
           multiple
           accept={acceptedFormats.join(',')}
           className="hidden"
-          onChange={() => {}} // Handled by browse click
+          onChange={handleFileInputChange}
         />
 
         <div className="flex flex-col items-center space-y-3">
@@ -162,10 +174,7 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
               variant="primary" 
               size="sm"
               icon={<Icon name="folder-open" className="w-4 h-4" />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleBrowseClick();
-              }}
+              onClick={handleBrowseClick}
             >
               Browse Files
             </Button>

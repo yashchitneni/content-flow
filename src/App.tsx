@@ -22,7 +22,7 @@ function App() {
           size="sm"
           onClick={() => setCurrentScreen('content-studio')}
         >
-          Templates
+          Content Studio
         </Button>
       </div>
 

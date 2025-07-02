@@ -73,8 +73,45 @@ export const SettingsPanel: React.FC = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const response = await invoke<SettingsResponse>('get_settings');
+      
+      // For demo - use localStorage instead of Tauri
+      const savedKeys = localStorage.getItem('contentflow-api-keys');
+      const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
+      
+      // Mock settings response for demo
+      const response: SettingsResponse = {
+        api_keys: [
+          { service: 'descript', is_set: !!apiKeys.descript, created_at: new Date().toISOString() },
+          { service: 'openai', is_set: !!apiKeys.openai, created_at: new Date().toISOString() },
+          { service: 'claude', is_set: !!apiKeys.claude, created_at: new Date().toISOString() },
+        ],
+        preferences: {
+          theme: 'light',
+          auto_save_interval: 30,
+          default_export_format: 'png',
+          show_tips: true,
+        },
+        file_organization: {
+          auto_organize: true,
+          folder_pattern: 'YYYY/MM',
+          cleanup_after_days: 30,
+        },
+        brand_settings: {
+          primary_color: '#0066FF',
+          secondary_color: '#6B46C1',
+          font_family: 'Inter',
+        },
+        usage_stats: {
+          descript_api_calls: 0,
+          openai_tokens_used: 0,
+          claude_tokens_used: 0,
+          storage_used_mb: 0,
+          last_updated: new Date().toISOString(),
+        },
+      };
+      
       setSettings(response);
+      setApiKeyValues(apiKeys);
     } catch (error) {
       showToast({
         title: 'Error',
@@ -88,17 +125,31 @@ export const SettingsPanel: React.FC = () => {
 
   const handleApiKeySave = async (service: string) => {
     try {
-      await invoke('update_api_key', {
-        update: {
-          service,
-          key: apiKeyValues[service],
-        },
-      });
+      // For demo - save to localStorage instead of Tauri
+      const currentKeys = localStorage.getItem('contentflow-api-keys');
+      const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
+      apiKeys[service] = apiKeyValues[service];
+      localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
+      
+      // Update local state
+      if (settings) {
+        const updatedApiKeys = settings.api_keys.map(key => 
+          key.service === service 
+            ? { ...key, is_set: !!apiKeyValues[service] }
+            : key
+        );
+        setSettings({ ...settings, api_keys: updatedApiKeys });
+      }
+      
       showToast({
         title: 'Success',
-        description: `${service} API key updated successfully`,
+        description: `${service} API key saved successfully`,
         variant: 'success',
       });
+      
+      // Also show browser alert for demo
+      alert(`✅ ${service.toUpperCase()} API key saved successfully!\n\nYou can now use this key for content generation.`);
+      
       setApiKeyValues((prev) => ({ ...prev, [service]: '' }));
       await loadSettings();
     } catch (error) {

@@ -10,7 +10,7 @@ export const ContentStudio: React.FC = () => {
   const [selectedTranscripts, setSelectedTranscripts] = useState<string[]>([]);
   const [availableTranscripts, setAvailableTranscripts] = useState<TranscriptSummary[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [step, setStep] = useState<'transcripts' | 'templates' | 'generate'>('transcripts');
+  const [step, setStep] = useState<'transcripts' | 'templates' | 'generate'>('templates');
 
   useEffect(() => {
     loadTranscripts();
@@ -81,11 +81,16 @@ export const ContentStudio: React.FC = () => {
       // Import WorkflowOrchestrator dynamically
       const { default: WorkflowOrchestrator } = await import('../workflows');
       
-      // Initialize orchestrator with OpenAI (can be configured later)
+      // Get saved API keys from localStorage
+      const savedKeys = localStorage.getItem('contentflow-api-keys');
+      const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
+      
+      // Initialize orchestrator with saved API key
       const orchestrator = new WorkflowOrchestrator({
         aiProvider: 'openai',
         apiKeys: {
-          openai: process.env.OPENAI_API_KEY || 'demo-key', // Will use mock for demo
+          openai: apiKeys.openai || process.env.OPENAI_API_KEY || 'demo-key',
+          anthropic: apiKeys.claude || process.env.ANTHROPIC_API_KEY,
         },
         logging: { level: 'info' }
       });
@@ -162,7 +167,10 @@ export const ContentStudio: React.FC = () => {
                 <div 
                   className={`
                     w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                    ${step === stepName || (index === 0 && availableTranscripts.length > 0) || (index === 1 && selectedTemplate)
+                    ${step === stepName || 
+                      (stepName === 'transcripts' && availableTranscripts.length > 0) || 
+                      (stepName === 'templates' && selectedTemplate) ||
+                      (stepName === 'generate' && selectedTemplate && step === 'generate')
                       ? 'bg-primary-500 text-white' 
                       : 'bg-gray-200 text-gray-600'
                     }
