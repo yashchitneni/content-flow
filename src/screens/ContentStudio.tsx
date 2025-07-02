@@ -1,7 +1,7 @@
 // Task #17: Create Content Generation UI
 import React, { useState, useEffect } from 'react';
 import { TemplateSelector, ContentTemplate } from '../components/molecules/TemplateSelector';
-import { TranscriptDropZone, TranscriptSummary } from '../components/molecules/TranscriptDropZone';
+import { TranscriptDropZone, TranscriptSummary, FileData } from '../components/molecules/TranscriptDropZone';
 import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
 
@@ -64,10 +64,43 @@ export const ContentStudio: React.FC = () => {
     }
   };
 
-  const handleTranscriptsImported = (transcriptPaths: string[]) => {
-    setSelectedTranscripts(transcriptPaths);
-    loadTranscripts(); // Refresh the list
-    if (transcriptPaths.length > 0) {
+  const handleTranscriptsImported = (fileData: FileData[] | string[]) => {
+    // Handle both file data and string array for backward compatibility
+    if (Array.isArray(fileData) && fileData.length > 0) {
+      if (typeof fileData[0] === 'string') {
+        // Legacy string array handling
+        setSelectedTranscripts(fileData as string[]);
+        loadTranscripts();
+      } else {
+        // New file data handling
+        const files = fileData as FileData[];
+        const newTranscripts: TranscriptSummary[] = files.map((file, index) => {
+          const wordCount = file.content.split(/\s+/).length;
+          const preview = file.content.substring(0, 300) + (file.content.length > 300 ? '...' : '');
+          
+          return {
+            id: `imported-${Date.now()}-${index}`,
+            filename: file.name,
+            word_count: wordCount,
+            language: 'en',
+            content_preview: preview,
+            full_content: file.content, // Store full content
+            imported_at: new Date().toISOString(),
+            status: 'imported' as const
+          };
+        });
+        
+        // Add to available transcripts (replace mock data)
+        setAvailableTranscripts(prev => [...newTranscripts, ...prev.filter(t => !t.id.startsWith('imported-'))]);
+        
+        // Auto-select the new transcripts
+        setSelectedTranscripts(newTranscripts.map(t => t.id));
+        
+        // Show success message
+        alert(`✅ Successfully imported ${files.length} transcript${files.length > 1 ? 's' : ''}!\n\nYour file${files.length > 1 ? 's are' : ' is'} ready for content generation.`);
+      }
+      
+      // Move to template selection
       setStep('templates');
     }
   };
@@ -92,19 +125,21 @@ export const ContentStudio: React.FC = () => {
           openai: apiKeys.openai || process.env.OPENAI_API_KEY || 'demo-key',
           anthropic: apiKeys.claude || process.env.ANTHROPIC_API_KEY,
         },
-        logging: { level: 'info' }
+        logging: { level: 'info', format: 'pretty' }
       });
       
-      // Prepare transcript data for LangGraph
-      const transcriptData = availableTranscripts.map(transcript => ({
-        id: transcript.id,
-        content: transcript.content_preview, // Using preview for now, full content in real implementation
-        analysis: {
-          summary: `Analysis of ${transcript.filename}`,
-          keyPoints: ['Key point 1', 'Key point 2', 'Key point 3'],
-          tags: ['AI', 'Content', 'Creation']
-        }
-      }));
+      // Prepare transcript data for LangGraph - use full content if available
+      const transcriptData = availableTranscripts
+        .filter(t => selectedTranscripts.includes(t.id))
+        .map(transcript => ({
+          id: transcript.id,
+          content: transcript.full_content || transcript.content_preview,
+          analysis: {
+            summary: `Analysis of ${transcript.filename}`,
+            keyPoints: ['Key point 1', 'Key point 2', 'Key point 3'],
+            tags: ['AI', 'Content', 'Creation']
+          }
+        }));
       
       // Map template names to LangGraph template types
       const templateMap: Record<string, 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script'> = {
@@ -114,13 +149,19 @@ export const ContentStudio: React.FC = () => {
         'youtube-script': 'video-script'
       };
       
-      const langGraphTemplate = templateMap[selectedTemplate?.id || 'twitter-thread'];
+      const langGraphTemplate = templateMap[selectedTemplate || 'twitter-thread'];
+      const templateConstraints = {
+        'twitter-thread': { maxLength: 280, maxTweets: 10 },
+        'instagram-carousel': { maxSlides: 10, maxCaptionLength: 2200 },
+        'linkedin-article': { maxLength: 3000 },
+        'youtube-script': { targetDuration: '5-10 minutes' }
+      };
       
       // 🚀 LANGGRAPH INTEGRATION - REAL AI GENERATION!
       const result = await orchestrator.generateContent(
         transcriptData,
         langGraphTemplate,
-        selectedTemplate?.constraints
+        templateConstraints[selectedTemplate || 'twitter-thread']
       );
       
       setIsGenerating(false);
@@ -143,7 +184,13 @@ export const ContentStudio: React.FC = () => {
       setIsGenerating(false);
       
       // Fallback demo content for when API keys aren't configured
-      alert(`🚀 LangGraph Demo!\n\nGenerated ${selectedTemplate?.name} content from ${availableTranscripts.length} transcript(s)!\n\nTemplate: ${selectedTemplate?.name}\nConstraints: ${Object.keys(selectedTemplate?.constraints || {}).join(', ')}\n\n(Configure OPENAI_API_KEY for real AI generation)`);
+      const templateNames = {
+        'twitter-thread': 'Twitter Thread',
+        'instagram-carousel': 'Instagram Carousel',
+        'linkedin-article': 'LinkedIn Article',
+        'youtube-script': 'YouTube Script'
+      };
+      alert(`🚀 LangGraph Demo!\n\nGenerated ${templateNames[selectedTemplate || 'twitter-thread']} content from ${selectedTranscripts.length} transcript(s)!\n\nTemplate: ${templateNames[selectedTemplate || 'twitter-thread']}\n\n(Configure OpenAI API key in Settings for real AI generation)`);
     }
   };
 
@@ -205,8 +252,20 @@ export const ContentStudio: React.FC = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {availableTranscripts.map((transcript) => (
-                  <div key={transcript.id} className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 truncate">{transcript.filename}</h4>
+                  <div 
+                    key={transcript.id} 
+                    className={`border rounded-lg p-4 transition-all ${
+                      transcript.id.startsWith('imported-') 
+                        ? 'border-green-300 bg-green-50' 
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <h4 className="font-medium text-gray-900 truncate flex-1">{transcript.filename}</h4>
+                      {transcript.id.startsWith('imported-') && (
+                        <Icon name="check-circle" className="w-4 h-4 text-green-600 ml-2 flex-shrink-0" />
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 mt-1">{transcript.word_count} words</p>
                     <p className="text-xs text-gray-500 mt-2 line-clamp-3">{transcript.content_preview}</p>
                   </div>
@@ -265,7 +324,7 @@ export const ContentStudio: React.FC = () => {
                 
                 <Button
                   variant="primary"
-                  size="lg"
+                  size="large"
                   disabled={isGenerating}
                   onClick={handleGenerate}
                   icon={isGenerating ? undefined : <Icon name="brain" className="w-5 h-5" />}

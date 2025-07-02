@@ -40,14 +40,13 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
 
     if (disabled || isImporting) return;
 
-    // Demo mode - simulate successful file drop
     const files = Array.from(e.dataTransfer.files);
     const transcriptFiles = files.filter(file => 
       acceptedFormats.some(format => file.name.toLowerCase().endsWith(format.replace('.', '')))
     );
     
     if (transcriptFiles.length > 0) {
-      await processTranscripts(transcriptFiles.map(f => f.name));
+      await processTranscripts(transcriptFiles);
     } else {
       setErrors(['Please drop valid transcript files (.txt, .srt, .vtt)']);
     }
@@ -68,7 +67,7 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
     );
     
     if (transcriptFiles.length > 0) {
-      await processTranscripts(transcriptFiles.map(f => f.name));
+      await processTranscripts(transcriptFiles);
     } else {
       setErrors(['Please select valid transcript files (.txt, .srt, .vtt)']);
     }
@@ -77,31 +76,40 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
     e.target.value = '';
   };
 
-  const processTranscripts = async (filePaths: string[]) => {
+  const processTranscripts = async (files: File[]) => {
     setIsProcessing(true);
     setErrors([]);
     setProgress(0);
 
     try {
-      // Demo mode processing
+      // Read file contents
       setProgress(25);
       
-      // Simulate validation
+      const fileContents = await Promise.all(
+        files.map(async (file) => {
+          const text = await file.text();
+          return {
+            name: file.name,
+            content: text,
+            size: file.size,
+            lastModified: file.lastModified
+          };
+        })
+      );
+      
+      setProgress(50);
+      
+      // Simulate processing time
       setTimeout(() => {
-        setProgress(50);
+        setProgress(75);
         
-        // Simulate import
         setTimeout(() => {
-          setProgress(75);
-          
-          // Complete processing
-          setTimeout(() => {
-            setProgress(100);
-            onTranscriptsSelected?.(filePaths);
-            setIsProcessing(false);
-            setProgress(0);
-          }, 300);
-        }, 500);
+          setProgress(100);
+          // Pass the actual file contents
+          onTranscriptsSelected?.(fileContents as any);
+          setIsProcessing(false);
+          setProgress(0);
+        }, 300);
       }, 500);
     } catch (error) {
       console.error('Error processing transcripts:', error);

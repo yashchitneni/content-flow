@@ -1,2 +1,2 @@
 export { TranscriptDropZone } from './TranscriptDropZone';
-export type { TranscriptDropZoneProps, TranscriptImportRequest, ImportedTranscript, TranscriptImportResult, TranscriptSummary } from './TranscriptDropZone.types';
+export type { TranscriptDropZoneProps, TranscriptImportRequest, ImportedTranscript, TranscriptImportResult, TranscriptSummary, FileData } from './TranscriptDropZone.types';

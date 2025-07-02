@@ -1,7 +1,14 @@
 // Task #11: Build Transcript Auto-Import System
 
+export interface FileData {
+  name: string;
+  content: string;
+  size: number;
+  lastModified: number;
+}
+
 export interface TranscriptDropZoneProps {
-  onTranscriptsSelected: (transcripts: string[]) => void;
+  onTranscriptsSelected: (transcripts: FileData[] | string[]) => void;
   isImporting?: boolean;
   acceptedFormats?: string[];
   maxFiles?: number;
@@ -40,6 +47,7 @@ export interface TranscriptSummary {
   word_count: number;
   language: string;
   content_preview: string;
+  full_content?: string;
   imported_at: string;
-  status: string;
+  status: 'imported' | 'processing' | 'error';
 }
