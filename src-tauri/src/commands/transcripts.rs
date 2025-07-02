@@ -295,6 +295,147 @@ fn count_words(text: &str) -> usize {
     text.split_whitespace().count()
 }
 
+// Task #14: AI-Powered Tag Extraction
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExtractTagsRequest {
+    pub transcript_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExtractedTag {
+    pub tag: String,
+    pub relevance: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TagExtractionResult {
+    pub transcript_id: String,
+    pub tags: Vec<ExtractedTag>,
+    pub content_score: f64,
+    pub platform_scores: PlatformScores,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlatformScores {
+    pub thread: f64,
+    pub carousel: f64,
+    pub blog: f64,
+}
+
+#[tauri::command]
+pub async fn extract_and_store_tags(
+    database: State<'_, Arc<Database>>,
+    transcript_id: String,
+    tags: Vec<ExtractedTag>,
+    content_score: f64,
+) -> Result<(), String> {
+    // Start a transaction
+    let mut tx = database.pool.begin()
+        .await
+        .map_err(|e| format!("Failed to start transaction: {}", e))?;
+    
+    // Update content score in transcript table
+    sqlx::query(
+        "UPDATE Transcript SET ContentScore = ?1, AnalyzedAt = datetime('now') WHERE TranscriptID = ?2"
+    )
+    .bind(content_score)
+    .bind(&transcript_id)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| format!("Failed to update transcript: {}", e))?;
+    
+    // Insert or update tags
+    for tag_data in tags {
+        // First, insert tag if it doesn't exist
+        let tag_id = Uuid::new_v4().to_string();
+        
+        // Check if tag already exists
+        let existing_tag = sqlx::query_as::<_, (String,)>(
+            "SELECT TagID FROM Tag WHERE LOWER(TagName) = LOWER(?1)"
+        )
+        .bind(&tag_data.tag)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| format!("Failed to check existing tag: {}", e))?;
+        
+        let final_tag_id = if let Some((existing_id,)) = existing_tag {
+            existing_id
+        } else {
+            // Insert new tag
+            sqlx::query(
+                "INSERT INTO Tag (TagID, TagName, CreatedAt) VALUES (?1, ?2, datetime('now'))"
+            )
+            .bind(&tag_id)
+            .bind(&tag_data.tag)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| format!("Failed to insert tag: {}", e))?;
+            
+            tag_id
+        };
+        
+        // Insert or update transcript-tag relationship
+        sqlx::query(
+            "INSERT OR REPLACE INTO TranscriptTags (TranscriptID, TagID, Relevance) VALUES (?1, ?2, ?3)"
+        )
+        .bind(&transcript_id)
+        .bind(&final_tag_id)
+        .bind(tag_data.relevance)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| format!("Failed to insert transcript-tag relationship: {}", e))?;
+    }
+    
+    // Commit transaction
+    tx.commit()
+        .await
+        .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+    
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_transcript_tags(
+    database: State<'_, Arc<Database>>,
+    transcript_id: String,
+) -> Result<Vec<ExtractedTag>, String> {
+    let rows = sqlx::query_as::<_, (String, f64)>(
+        "SELECT t.TagName, tt.Relevance FROM TranscriptTags tt 
+         JOIN Tag t ON tt.TagID = t.TagID 
+         WHERE tt.TranscriptID = ?1 
+         ORDER BY tt.Relevance DESC"
+    )
+    .bind(&transcript_id)
+    .fetch_all(&database.pool)
+    .await
+    .map_err(|e| format!("Failed to fetch tags: {}", e))?;
+    
+    let tags = rows
+        .into_iter()
+        .map(|(tag, relevance)| ExtractedTag { tag, relevance })
+        .collect();
+    
+    Ok(tags)
+}
+
+#[tauri::command]
+pub async fn get_all_tags(
+    database: State<'_, Arc<Database>>,
+) -> Result<Vec<(String, i64)>, String> {
+    let rows = sqlx::query_as::<_, (String, i64)>(
+        "SELECT t.TagName, COUNT(tt.TranscriptID) as usage_count 
+         FROM Tag t 
+         LEFT JOIN TranscriptTags tt ON t.TagID = tt.TagID 
+         GROUP BY t.TagID 
+         ORDER BY usage_count DESC"
+    )
+    .fetch_all(&database.pool)
+    .await
+    .map_err(|e| format!("Failed to fetch all tags: {}", e))?;
+    
+    Ok(rows)
+}
+
 // Task #12: Full-Text Search Implementation
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TranscriptSearchRequest {

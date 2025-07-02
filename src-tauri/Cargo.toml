@@ -6,6 +6,11 @@ authors = ["ContentFlow Team"]
 license = ""
 repository = ""
 edition = "2021"
+default-run = "contentflow"
+
+[[bin]]
+name = "contentflow"
+path = "src/main.rs"
 
 [[bin]]
 name = "test_search"

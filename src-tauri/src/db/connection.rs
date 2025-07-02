@@ -26,6 +26,16 @@ impl Database {
         Ok(Self { pool })
     }
     
+    // Task #12: Add in-memory database for testing
+    pub async fn new_in_memory() -> Result<Self, Box<dyn std::error::Error>> {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite:?mode=memory&cache=shared")
+            .await?;
+        
+        Ok(Self { pool })
+    }
+    
     pub async fn migrate(&self) -> Result<(), Box<dyn std::error::Error>> {
         crate::db::migrations::run_migrations(&self.pool).await?;
         Ok(())

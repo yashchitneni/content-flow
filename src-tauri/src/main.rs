@@ -8,7 +8,11 @@ use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use commands::auth::{AuthManager, initiate_auth, handle_auth_callback, get_auth_state, refresh_auth, logout, get_access_token};
 use commands::files::{validate_video_files, import_video_files, import_and_organize_video_files, get_imported_files, get_file_count};
-use commands::transcripts::{validate_transcript_files, import_transcript_files, get_imported_transcripts, get_transcript_count, get_transcript_by_id, search_transcripts};
+use commands::transcripts::{
+    validate_transcript_files, import_transcript_files, get_imported_transcripts, 
+    get_transcript_count, get_transcript_by_id, search_transcripts,
+    extract_and_store_tags, get_transcript_tags, get_all_tags // Task #14
+};
 use commands::upload::{UploadManager, initialize_upload_service, create_descript_project, batch_upload_files, get_export_instructions, open_export_folder, get_upload_status, cancel_upload};
 use commands::settings::SettingsState;
 
@@ -69,6 +73,9 @@ fn main() {
             get_transcript_count,
             get_transcript_by_id,
             search_transcripts,
+            extract_and_store_tags, // Task #14
+            get_transcript_tags, // Task #14
+            get_all_tags, // Task #14
             // Auth commands
             initiate_auth,
             handle_auth_callback,
