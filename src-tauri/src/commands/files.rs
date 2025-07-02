@@ -5,6 +5,7 @@ use uuid::Uuid;
 use std::fs;
 use std::sync::Arc;
 use crate::db::Database;
+use chrono::Utc;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileImportRequest {
@@ -119,18 +120,35 @@ async fn import_single_file(
     // Generate unique ID
     let file_id = Uuid::new_v4().to_string();
     
-    // Insert into database
+    // Get current timestamp
+    let now = Utc::now().to_rfc3339();
+    
+    // Insert into database using our actual schema
     sqlx::query(
-        "INSERT INTO files (id, original_path, filename, file_size, format, status, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now'))"
+        r#"
+        INSERT INTO File (
+            FileID, 
+            FolderID,
+            FilePath, 
+            OriginalName, 
+            FileSize, 
+            Status,
+            ImportedAt,
+            UpdatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        "#
     )
     .bind(&file_id)
+    .bind::<Option<String>>(None) // FolderID - will be set later by organization system
     .bind(file_path)
     .bind(&filename)
     .bind(file_size as i64)
-    .bind(&extension)
-    .bind("imported")
+    .bind("Imported")
+    .bind(&now)
+    .bind(&now)
     .execute(&database.pool)
-    .await?;
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
     
     Ok(ImportedFile {
         id: file_id,
@@ -138,7 +156,7 @@ async fn import_single_file(
         filename,
         file_size,
         format: extension,
-        status: "imported".to_string(),
+        status: "Imported".to_string(),
     })
 }
 
@@ -146,8 +164,18 @@ async fn import_single_file(
 pub async fn get_imported_files(
     database: State<'_, Arc<Database>>,
 ) -> Result<Vec<ImportedFile>, String> {
-    let rows = sqlx::query_as::<_, (String, String, String, i64, String, String)>(
-        "SELECT id, original_path, filename, file_size, format, status FROM files ORDER BY created_at DESC"
+    let rows = sqlx::query_as::<_, (String, String, String, i64, Option<String>, String)>(
+        r#"
+        SELECT 
+            FileID, 
+            FilePath, 
+            OriginalName, 
+            FileSize,
+            Orientation,
+            Status 
+        FROM File 
+        ORDER BY ImportedAt DESC
+        "#
     )
     .fetch_all(&database.pool)
     .await
@@ -155,13 +183,20 @@ pub async fn get_imported_files(
     
     let files = rows
         .into_iter()
-        .map(|(id, original_path, filename, file_size, format, status)| ImportedFile {
-            id,
-            original_path,
-            filename,
-            file_size: file_size as u64,
-            format,
-            status,
+        .map(|(id, file_path, filename, file_size, _orientation, status)| {
+            // Extract format from filename
+            let format = filename.split('.').last()
+                .unwrap_or("unknown")
+                .to_lowercase();
+            
+            ImportedFile {
+                id,
+                original_path: file_path,
+                filename,
+                file_size: file_size as u64,
+                format,
+                status,
+            }
         })
         .collect();
     
@@ -172,7 +207,7 @@ pub async fn get_imported_files(
 pub async fn get_file_count(
     database: State<'_, Arc<Database>>,
 ) -> Result<i64, String> {
-    let row = sqlx::query_as::<_, (i64,)>("SELECT COUNT(*) FROM files")
+    let row = sqlx::query_as::<_, (i64,)>("SELECT COUNT(*) FROM File")
         .fetch_one(&database.pool)
         .await
         .map_err(|e| format!("Query failed: {}", e))?;

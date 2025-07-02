@@ -3,10 +3,11 @@ import { Settings } from './screens/Settings';
 import { ContentStudio } from './screens/ContentStudio';
 import { FileOrganizer } from './screens/FileOrganizer';
 import { DatabaseStatus } from './screens/DatabaseStatus';
+import { VideoImport } from './screens/VideoImport';
 import { Button } from './components/atoms/Button';
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<'settings' | 'content-studio' | 'file-organizer' | 'database'>('content-studio');
+  const [currentScreen, setCurrentScreen] = useState<'settings' | 'content-studio' | 'file-organizer' | 'database' | 'video-import'>('content-studio');
 
   return (
     <div className="App">
@@ -40,12 +41,20 @@ function App() {
           >
             Database
           </Button>
+          <Button 
+            variant={currentScreen === 'video-import' ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setCurrentScreen('video-import')}
+          >
+            Video Import
+          </Button>
         </div>
 
         {currentScreen === 'settings' && <Settings />}
         {currentScreen === 'content-studio' && <ContentStudio />}
         {currentScreen === 'file-organizer' && <FileOrganizer />}
         {currentScreen === 'database' && <DatabaseStatus />}
+        {currentScreen === 'video-import' && <VideoImport />}
     </div>
   );
 }
