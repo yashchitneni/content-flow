@@ -21,7 +21,13 @@ export type IconName =
   | 'user'
   | 'check'
   | 'minus'
-  | 'upload';
+  | 'upload'
+  | 'video'
+  | 'file'
+  | 'image'
+  | 'message-circle'
+  | 'file-text'
+  | 'chevron-right';
 
 export interface IconProps {
   name: IconName;

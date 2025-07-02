@@ -7,6 +7,8 @@ mod db;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use commands::auth::{AuthManager, initiate_auth, handle_auth_callback, get_auth_state, refresh_auth, logout, get_access_token};
+use commands::files::{validate_video_files, import_video_files, get_imported_files, get_file_count};
+use commands::transcripts::{validate_transcript_files, import_transcript_files, get_imported_transcripts, get_transcript_count, get_transcript_by_id};
 use commands::upload::{UploadManager, initialize_upload_service, create_descript_project, batch_upload_files, get_export_instructions, open_export_folder, get_upload_status, cancel_upload};
 use commands::settings::SettingsState;
 
@@ -53,6 +55,17 @@ fn main() {
             // Database commands
             commands::database::test_database_schema,
             commands::database::get_table_count,
+            // File commands
+            validate_video_files,
+            import_video_files,
+            get_imported_files,
+            get_file_count,
+            // Transcript commands
+            validate_transcript_files,
+            import_transcript_files,
+            get_imported_transcripts,
+            get_transcript_count,
+            get_transcript_by_id,
             // Auth commands
             initiate_auth,
             handle_auth_callback,

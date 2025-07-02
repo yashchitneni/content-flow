@@ -1,226 +1,86 @@
-PRODUCT REQUIREMENTS DOCUMENT: ContentFlow - AI-Powered Content Creation Studio
+# ContentFlow - Product Requirements Document
 
-PROJECT OVERVIEW:
-ContentFlow is a macOS desktop application that automates the content creation workflow from video file ingestion to social media-ready content. Built with Tauri (Rust + React), it integrates with Descript for transcription and uses LangGraph for AI-powered content generation. This PRD follows the comprehensive documentation system and cross-references all existing requirements.
+## Executive Summary
+ContentFlow is a macOS desktop application that automates the content creation workflow from video file ingestion through transcript processing to social media content generation. Built with Tauri (Rust + React), it integrates with external services for transcription and uses AI for content generation.
 
-DOCUMENTATION REFERENCES:
-- Functional Requirements: FR-001 through FR-060 (/docs/functional-requirements.md)
-- User Flows: UF-001 through UF-007 (/docs/user-flow.md)
-- Entity Relationships: 10 core entities (/docs/entity-relationship-diagram.md)
-- Atomic Design System: Complete component hierarchy (/docs/atomic-design-system.md)
-- System Architecture: Technical stack and deployment (/docs/system-architecture.md)
+## Core Features
 
-CORE OBJECTIVES:
-1. Implement all 60 functional requirements (FR-001 to FR-060)
-2. Support all 7 user flows (UF-001 to UF-007) with performance targets
-3. Build using atomic design system with all defined components
-4. Maintain database schema integrity with proper relationships
-5. Achieve 4-day MVP timeline with phased delivery
+### 1. File Management & Import (FR-001 to FR-010)
+- Drag-and-drop video file import (.mp4, .mov, .avi, .mkv)
+- Visual feedback and validation
+- File browser integration
+- Progress tracking for batch imports
+- Import history and status tracking
 
-KEY FEATURES BY REQUIREMENT GROUP:
+### 2. Video Organization & Analysis (FR-011 to FR-020)
+- FFmpeg integration for video metadata extraction
+- Automatic categorization by orientation (16:9, 9:16, 1:1)
+- Content type estimation based on duration and audio
+- Smart folder organization: ~/ContentFlow/[YYYY]/[MM]/[Orientation]/
+- Real-time analysis progress tracking
 
-1. FILE MANAGEMENT (FR-001 to FR-010, UF-001, UF-002)
-Required Components:
-- Atoms: Button (primary, secondary), Icon (upload, folder)
-- Molecules: DropZone, FileItem, ProgressIndicator
-- Organisms: FileGrid, ImportModal
-- Templates: SidebarLayout
+### 3. External Integration (FR-021 to FR-030)
+- OAuth 2.0 authentication flow
+- Batch upload functionality
+- Manual export workflow support
+- File monitoring and auto-import
+- Error handling and retry logic
 
-Implementation Requirements:
-- Drag-and-drop with visual feedback (FR-001)
-- Format validation for .mp4, .mov, .avi, .mkv (FR-002)
-- Multi-file selection with progress tracking (FR-003)
-- Import history with undo capability (FR-004)
-- File path persistence in JSON (FR-005)
-- SD card auto-detection (FR-006)
-- Import queue management (FR-007)
-- Duplicate detection via SHA-256 (FR-008)
-- Error handling with user feedback (FR-009)
-- Size validation with warnings (FR-010)
+### 4. Transcript Library (FR-031 to FR-040)
+- Full-text search with SQLite FTS5
+- Tag extraction and content analysis
+- Advanced filtering and sorting
+- Content potential scoring
+- Multi-selection for batch operations
 
-Database Entities: Files, ImportHistory
-Performance: <500ms per file import
+### 5. Content Generation Studio (FR-041 to FR-050)
+- LangGraph-powered AI content generation
+- Multiple platform templates (Instagram, Twitter, LinkedIn, YouTube)
+- Real-time constraint validation
+- Auto-save and version history
+- Template-specific editing tools
 
-2. VIDEO ORGANIZATION (FR-011 to FR-020, UF-002)
-Required Components:
-- Atoms: Badge (orientation, type), Thumbnail
-- Molecules: MetadataDisplay, FolderTree
-- Organisms: OrganizationPanel
-- Templates: SplitView
+### 6. Export & Settings (FR-051 to FR-060)
+- Multi-format export (PNG, text, ZIP)
+- Clipboard integration with platform formatting
+- API key management and validation
+- Brand settings and preferences
+- Usage statistics and quotas
 
-Implementation Requirements:
-- FFmpeg metadata extraction (FR-011)
-- Thumbnail generation at 10s mark (FR-012)
-- Duration and resolution capture (FR-013)
-- Smart folder structure creation (FR-014)
-- Orientation-based categorization (FR-015)
-- Date-based organization (FR-016)
-- Content type detection (FR-017)
-- Folder preference learning (FR-018)
-- Bulk reorganization (FR-019)
-- Undo/redo for moves (FR-020)
+## Technical Requirements
+- **Platform**: macOS only
+- **Architecture**: Tauri v2 (Rust backend + React frontend)
+- **Database**: SQLite with FTS5 for search
+- **AI Framework**: LangGraph for content workflows
+- **Video Processing**: FFmpeg integration
+- **UI Framework**: React + TypeScript + Tailwind CSS
+- **Design System**: Atomic design principles
 
-Database Entities: Files, Folders, FileMetadata
-Performance: <2s video analysis
+## Performance Targets
+- Video analysis: <2s per file
+- Search response: <200ms
+- Content generation: <30s
+- File import: Real-time progress feedback
+- UI responsiveness: 60fps interactions
 
-3. DESCRIPT INTEGRATION (FR-021 to FR-030, UF-003, UF-004)
-Required Components:
-- Atoms: StatusIndicator, LoadingSpinner
-- Molecules: AuthCard, UploadProgress
-- Organisms: DescriptPanel, ProjectList
-- Templates: FullscreenModal
+## User Experience Goals
+- Intuitive drag-and-drop workflow
+- Clear progress feedback for all operations
+- Comprehensive error handling with helpful messages
+- Consistent visual design following atomic design system
+- Efficient keyboard shortcuts and batch operations
 
-Implementation Requirements:
-- OAuth 2.0 flow with PKCE (FR-021)
-- Token secure storage (FR-022)
-- Batch upload (20 file limit) (FR-023)
-- Project naming patterns (FR-024)
-- Upload progress tracking (FR-025)
-- Auto-retry with backoff (FR-026)
-- Export folder monitoring (FR-027)
-- Transcript auto-import (FR-028)
-- Project ID tracking (FR-029)
-- Upload history (FR-030)
+## Integration Requirements
+- External API integration capabilities
+- Secure credential storage with encryption
+- File system monitoring and organization
+- Cross-platform file format support
+- Extensible plugin architecture for future integrations
 
-Database Entities: DescriptProjects, DescriptAuth, UploadQueue
-External API: Descript API v2
-
-4. TRANSCRIPT LIBRARY (FR-031 to FR-040, UF-005)
-Required Components:
-- Atoms: SearchInput, Tag, ScoreBadge
-- Molecules: SearchBar, FilterPanel, TranscriptPreview
-- Organisms: TranscriptCard, TranscriptGrid, SearchResults
-- Templates: DashboardGrid
-
-Implementation Requirements:
-- Full-text search with highlighting (FR-031)
-- Real-time results (<200ms) (FR-032)
-- Advanced filters (date, duration, tags) (FR-033)
-- Sort options (relevance, date, score) (FR-034)
-- AI tag extraction (FR-035)
-- Content scoring (Thread/Carousel/Blog) (FR-036)
-- Related transcript discovery (FR-037)
-- Batch selection UI (FR-038)
-- Quick preview on hover (FR-039)
-- Search history (FR-040)
-
-Database Entities: Transcripts, Tags, TranscriptTags, SearchHistory
-Search Implementation: SQLite FTS5
-
-5. CONTENT GENERATION (FR-041 to FR-050, UF-006)
-Required Components:
-- Atoms: Toggle, TextArea, CharacterCount
-- Molecules: TemplateSelector, ConstraintIndicator
-- Organisms: ContentEditor, GenerationPanel, SuggestionList
-- Templates: StudioLayout
-
-Implementation Requirements:
-- Multi-transcript source selection (FR-041)
-- Context preservation (FR-042)
-- LangGraph workflow integration (FR-043)
-- Platform templates (IG, Twitter, LinkedIn, YT) (FR-044)
-- Real-time constraint validation (FR-045)
-- Suggestion system (FR-046)
-- Draft auto-save (30s intervals) (FR-047)
-- Version history (FR-048)
-- Regeneration with feedback (FR-049)
-- Template customization (FR-050)
-
-Database Entities: GeneratedContent, ContentVersions, Templates
-AI Integration: LangGraph + OpenAI/Claude APIs
-
-6. EXPORT & SETTINGS (FR-051 to FR-060, UF-007)
-Required Components:
-- Atoms: Switch, SecretInput, StatCard
-- Molecules: ExportOptions, APIKeyForm, UsageChart
-- Organisms: SettingsPanel, ExportModal, StatsDisplay
-- Templates: SettingsLayout
-
-Implementation Requirements:
-- Platform-specific exports (FR-051)
-- Bulk export with ZIP (FR-052)
-- Export history tracking (FR-053)
-- Copy formatting options (FR-054)
-- API key management UI (FR-055)
-- Key validation (FR-056)
-- Brand voice settings (FR-057)
-- Template management (FR-058)
-- Usage tracking display (FR-059)
-- Quota warnings (FR-060)
-
-Database Entities: ExportHistory, Settings, APIKeys, UsageStats
-
-TECHNICAL ARCHITECTURE REQUIREMENTS:
-
-Frontend Stack (React + TypeScript + Tailwind):
-- Use atomic design file structure
-- Implement all design tokens (no magic values)
-- Follow component composition patterns
-- Maintain 5-6 visual states per component
-- Ensure WCAG AA accessibility
-
-Backend Stack (Rust + Tauri):
-- Implement all Tauri commands for IPC
-- FFmpeg integration for video processing
-- File system operations with error handling
-- External API integrations (Descript, AI)
-- SQLite database management
-
-Database Design:
-- UUID primary keys for all tables
-- Temporal tracking (created_at, updated_at)
-- Proper indexes for search performance
-- Foreign key constraints
-- Migration system
-
-DEVELOPMENT PRIORITIES (4-DAY MVP):
-
-Day 1: Foundation & File Management
-- Project setup with Tauri + React
-- Database schema implementation
-- File import (FR-001 to FR-005)
-- Basic UI atoms and molecules
-- Design token system setup
-
-Day 2: Organization & Integration
-- FFmpeg integration (FR-011 to FR-013)
-- Smart organization (FR-014 to FR-017)
-- Descript OAuth (FR-021 to FR-022)
-- Core organisms and templates
-
-Day 3: Search & Discovery
-- Transcript import (FR-027 to FR-028)
-- Search implementation (FR-031 to FR-033)
-- Tag system (FR-035)
-- LangGraph setup (FR-043)
-
-Day 4: Generation & Polish
-- Content generation UI (FR-041 to FR-045)
-- Export functionality (FR-051 to FR-052)
-- Settings panel (FR-055 to FR-057)
-- Error handling and testing
-
-SUCCESS CRITERIA:
-- All core user flows (UF-001 to UF-007) functioning
-- Performance targets met (<500ms import, <2s analysis, <30s generation)
-- Atomic design system fully implemented
-- Database integrity maintained
-- External integrations working (Descript, AI)
-
-TASK GENERATION GUIDELINES:
-Every task MUST include:
-1. Specific FR-XXX and/or UF-XXX references
-2. Required components from atomic design system
-3. Database entities involved
-4. Documentation file references
-5. Clear success criteria based on requirements
-
-Example Task Structure:
-- Task: Implement Video Import Drag and Drop
-- References: FR-001, FR-002, FR-003, UF-001
-- Components: DropZone (molecule), FileGrid (organism)
-- Database: Files table, ImportHistory table
-- Docs: atomic-design-system.md (Section 6.2), user-flow.md (UF-001)
-- Success: Files drop with visual feedback, format validation, <500ms response
-
-This PRD ensures complete alignment with the existing documentation system and provides clear mappings for Task Master to generate properly referenced tasks.
+## Success Metrics
+- <5 minutes from video import to organized content
+- 90%+ successful file processing rate
+- <3 clicks to generate content from transcript
+- Zero data loss during file operations
+- Intuitive onboarding flow completion rate >80%
+EOF < /dev/null

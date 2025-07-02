@@ -1,4 +1,6 @@
 pub mod auth;
 pub mod database;
-pub mod upload;
+pub mod files;
 pub mod settings;
+pub mod transcripts;
+pub mod upload;

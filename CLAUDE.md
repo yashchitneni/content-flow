@@ -225,3 +225,10 @@ AFTER completing work:
 Git Commit Messages:
 - Format: "Task #[ID]: [Brief description]"
 - Example: "Task #1: Initialize Tauri + React project structure"
+
+Task Master Discovery Notes:
+- Task Master can successfully read task lists using mcp__task-master-ai__get_tasks
+- Individual task retrieval with mcp__task-master-ai__get_task requires exact task ID string match
+- When Task Master initialization creates tasks, use mcp__task-master-ai__get_tasks to view all tasks
+- If mcp__task-master-ai__get_task fails for a visible task ID, work directly from task data from get_tasks
+- mcp__task-master-ai__next_task provides best task to work on next based on dependencies
