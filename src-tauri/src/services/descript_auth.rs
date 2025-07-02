@@ -1,15 +1,17 @@
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use aes_gcm::{
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Key, Nonce,
+};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
+use chrono::{DateTime, Duration, Utc};
+use rand::RngCore;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
+use std::sync::Arc;
 use tauri::{AppHandle, Manager, Emitter};
-use rand::{thread_rng, RngCore};
-use aes_gcm::{
-    aead::{Aead, KeyInit, OsRng},
-    Aes256Gcm, Nonce, Key
-};
-use aes_gcm::aead::generic_array::GenericArray;
+use tokio::sync::Mutex;
+use std::collections::HashMap;
 
 const DESCRIPT_AUTH_URL: &str = "https://api.descript.com/oauth/authorize";
 const DESCRIPT_TOKEN_URL: &str = "https://api.descript.com/oauth/token";
@@ -48,7 +50,7 @@ impl DescriptAuth {
     pub fn new(client_id: String, client_secret: String) -> Self {
         // Generate or retrieve encryption key (in production, store this securely)
         let mut key_bytes = [0u8; 32];
-        thread_rng().fill_bytes(&mut key_bytes);
+        rand::thread_rng().fill_bytes(&mut key_bytes);
         let encryption_key = Key::<Aes256Gcm>::from_slice(&key_bytes).clone();
         
         Self {
@@ -61,12 +63,12 @@ impl DescriptAuth {
     // Generate PKCE challenge
     fn generate_pkce_challenge() -> (String, String) {
         let mut verifier_bytes = [0u8; 32];
-        thread_rng().fill_bytes(&mut verifier_bytes);
-        let verifier = URL_SAFE_NO_PAD.encode(&verifier_bytes);
+        rand::thread_rng().fill_bytes(&mut verifier_bytes);
+        let verifier = BASE64.encode(&verifier_bytes);
         
         let mut hasher = Sha256::new();
         hasher.update(&verifier);
-        let challenge = URL_SAFE_NO_PAD.encode(hasher.finalize());
+        let challenge = BASE64.encode(hasher.finalize());
         
         (verifier, challenge)
     }
@@ -230,7 +232,7 @@ impl DescriptAuth {
             })?;
         
         let mut nonce_bytes = [0u8; 12];
-        thread_rng().fill_bytes(&mut nonce_bytes);
+        rand::thread_rng().fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
         
         let ciphertext = cipher
@@ -244,12 +246,12 @@ impl DescriptAuth {
         let mut combined = nonce_bytes.to_vec();
         combined.extend_from_slice(&ciphertext);
         
-        Ok(URL_SAFE_NO_PAD.encode(&combined))
+        Ok(BASE64.encode(&combined))
     }
     
     // Decrypt tokens from storage
     pub fn decrypt_tokens(&self, encrypted: &str) -> Result<AuthTokens, AuthError> {
-        let combined = URL_SAFE_NO_PAD
+        let combined = BASE64
             .decode(encrypted)
             .map_err(|e| AuthError {
                 message: format!("Failed to decode encrypted tokens: {}", e),
@@ -375,6 +377,7 @@ impl DescriptAuth {
 }
 
 // Auto-refresh manager
+#[allow(dead_code)]
 pub struct TokenRefreshManager {
     auth: DescriptAuth,
     app: AppHandle,

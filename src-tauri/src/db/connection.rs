@@ -33,6 +33,7 @@ impl Database {
 }
 
 // Helper function to get database path for development/testing
+#[allow(dead_code)]
 pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let app_dir = app.path()
         .app_data_dir()

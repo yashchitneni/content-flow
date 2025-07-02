@@ -1,6 +1,5 @@
+mod connection;
+mod migrations;
 pub mod schema;
-pub mod connection;
-pub mod migrations;
 
-pub use connection::*;
-pub use schema::*;
+pub use connection::Database;

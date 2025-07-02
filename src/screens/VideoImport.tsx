@@ -5,6 +5,7 @@ import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
 import { Badge } from '../components/atoms/Badge';
 import { Spinner } from '../components/atoms/Spinner';
+import { Tag } from '../components/atoms/Tag';
 import { invoke } from '@tauri-apps/api/core';
 
 export const VideoImport: React.FC = () => {
@@ -44,6 +45,18 @@ export const VideoImport: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return '';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (loading) {
     return (
       <div className="p-8">
@@ -69,7 +82,7 @@ export const VideoImport: React.FC = () => {
                 Video Import
               </h1>
               <p className="text-gray-600 mt-2">
-                Import video files to begin creating content
+                Import and organize video files automatically
               </p>
             </div>
             <div className="text-right">
@@ -101,16 +114,52 @@ export const VideoImport: React.FC = () => {
             <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
               {importedVideos.map((video) => (
                 <div key={video.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 bg-gray-100 rounded-lg">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="p-2 bg-gray-100 rounded-lg flex-shrink-0">
                         <Icon name="video" className="w-6 h-6 text-gray-600" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{video.filename}</h3>
-                        <p className="text-sm text-gray-600">
-                          {formatFileSize(video.file_size)} • {video.format.toUpperCase()}
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">{video.filename}</h3>
+                        
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                          <span>{formatFileSize(video.file_size)}</span>
+                          <span>•</span>
+                          <span>{video.format.toUpperCase()}</span>
+                          {video.metadata?.duration && (
+                            <>
+                              <span>•</span>
+                              <span>{formatDuration(video.metadata.duration)}</span>
+                            </>
+                          )}
+                          {video.metadata?.resolution && (
+                            <>
+                              <span>•</span>
+                              <span>{video.metadata.resolution}</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Folder Organization */}
+                        {video.folder && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Icon name="folder" className="w-4 h-4 text-primary-600" />
+                            <span className="text-sm text-primary-600">
+                              {video.folder}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Tags */}
+                        {video.tags && video.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {video.tags.map((tag, index) => (
+                              <Tag key={index}>
+                                {tag}
+                              </Tag>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -141,13 +190,29 @@ export const VideoImport: React.FC = () => {
         {/* Instructions */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-medium text-blue-900 mb-2">
-            How Video Import Works
+            How Video Organization Works
           </h3>
           <ol className="space-y-2 text-sm text-blue-800">
-            <li>1. Drag video files (.mp4, .mov, .avi, .mkv) into the drop zone</li>
-            <li>2. Files are validated and saved to the database</li>
-            <li>3. Videos appear in the list below with their metadata</li>
-            <li>4. Next step: FFmpeg will analyze videos for duration and thumbnails (Task #7)</li>
+            <li className="flex gap-2">
+              <span className="font-semibold">1.</span>
+              <span>Drop or select video files (.mp4, .mov, .avi, .mkv, .webm, .flv, .wmv)</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold">2.</span>
+              <span>Files are automatically analyzed for metadata (duration, resolution, codec)</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold">3.</span>
+              <span>Videos are organized into folders by format and date (e.g., MP4/2024/01)</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold">4.</span>
+              <span>Smart tags are added based on quality (4K, HD), duration, and format</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold">5.</span>
+              <span>All organization happens automatically - just drop your files!</span>
+            </li>
           </ol>
         </div>
 

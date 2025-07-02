@@ -1,8 +1,7 @@
-use crate::services::descript_auth::{AuthError, AuthState, AuthTokens, DescriptAuth};
+use crate::services::descript_auth::{AuthState, DescriptAuth};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Emitter, State};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Emitter, State};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthUrlResponse {
@@ -41,10 +40,11 @@ pub async fn initiate_auth(
     // Get auth URL with PKCE
     let (auth_url, verifier) = auth_manager.descript_auth.get_auth_url(&state);
     
-    // Store verifier for later use
-    auth_manager.pending_verifiers
+    // Store PKCE verifier for this session
+    auth_manager
+        .pending_verifiers
         .lock()
-        .await
+        .unwrap()
         .insert(state.clone(), verifier);
     
     Ok(AuthUrlResponse { auth_url, state })
@@ -56,12 +56,13 @@ pub async fn handle_auth_callback(
     auth_manager: State<'_, AuthManager>,
     request: AuthCallbackRequest,
 ) -> Result<AuthState, String> {
-    // Retrieve and remove verifier
-    let verifier = auth_manager.pending_verifiers
+    // Get the stored verifier
+    let verifier = auth_manager
+        .pending_verifiers
         .lock()
-        .await
+        .unwrap()
         .remove(&request.state)
-        .ok_or_else(|| "Invalid or expired auth state".to_string())?;
+        .ok_or_else(|| "Invalid or expired state".to_string())?;
     
     // Exchange code for tokens
     let tokens = auth_manager.descript_auth

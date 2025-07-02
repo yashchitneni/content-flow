@@ -4,10 +4,11 @@ import { ContentStudio } from './screens/ContentStudio';
 import { FileOrganizer } from './screens/FileOrganizer';
 import { DatabaseStatus } from './screens/DatabaseStatus';
 import { VideoImport } from './screens/VideoImport';
+import { TranscriptLibrary } from './screens/TranscriptLibrary';
 import { Button } from './components/atoms/Button';
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<'settings' | 'content-studio' | 'file-organizer' | 'database' | 'video-import'>('content-studio');
+  const [currentScreen, setCurrentScreen] = useState<'settings' | 'content-studio' | 'file-organizer' | 'database' | 'video-import' | 'transcript-library'>('content-studio');
 
   return (
     <div className="App">
@@ -48,6 +49,13 @@ function App() {
           >
             Video Import
           </Button>
+          <Button 
+            variant={currentScreen === 'transcript-library' ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setCurrentScreen('transcript-library')}
+          >
+            Transcripts
+          </Button>
         </div>
 
         {currentScreen === 'settings' && <Settings />}
@@ -55,6 +63,7 @@ function App() {
         {currentScreen === 'file-organizer' && <FileOrganizer />}
         {currentScreen === 'database' && <DatabaseStatus />}
         {currentScreen === 'video-import' && <VideoImport />}
+        {currentScreen === 'transcript-library' && <TranscriptLibrary />}
     </div>
   );
 }
