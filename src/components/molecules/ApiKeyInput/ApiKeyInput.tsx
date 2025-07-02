@@ -13,7 +13,7 @@ export interface ApiKeyInputProps {
   lastUsed?: string;
   placeholder?: string;
   onChange: (value: string) => void;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   onRemove: () => void;
   onVerify?: () => Promise<boolean>;
   disabled?: boolean;
@@ -41,9 +41,10 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
 
   // Initialize editing state based on whether key is set
   useEffect(() => {
+    console.log(`ApiKeyInput - isSet changed for ${label}:`, isSet);
     setIsEditing(!isSet);
     setTempValue('');
-  }, [isSet]);
+  }, [isSet, label]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -68,8 +69,10 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
       }
     }
     
-    onSave();
-    setIsEditing(false);
+    console.log(`ApiKeyInput - Saving key for ${label}`);
+    await onSave();
+    console.log(`ApiKeyInput - Save complete for ${label}`);
+    // The parent will update isSet, which will trigger the useEffect
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

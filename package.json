@@ -44,6 +44,8 @@
     "@langchain/langgraph": "^0.0.20",
     "@langchain/openai": "^0.0.10",
     "@tauri-apps/api": "2.6.0",
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.3.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

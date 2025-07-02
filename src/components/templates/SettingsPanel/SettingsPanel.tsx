@@ -148,15 +148,21 @@ export const SettingsPanel: React.FC = () => {
       
       console.log('Saved to localStorage:', apiKeys);
       
-      // Update local state
+      // Immediately update local state without reloading
       if (settings) {
         const updatedApiKeys = settings.api_keys.map(key => 
           key.service === service 
-            ? { ...key, is_set: true }
+            ? { ...key, is_set: true, created_at: new Date().toISOString() }
             : key
         );
         setSettings({ ...settings, api_keys: updatedApiKeys });
       }
+      
+      // Clear the input value
+      setApiKeyValues((prev) => ({ 
+        ...prev, 
+        [service]: ''
+      }));
       
       showToast({
         title: 'Success',
@@ -167,11 +173,6 @@ export const SettingsPanel: React.FC = () => {
       // Also show browser alert for demo
       alert(`✅ ${service.toUpperCase()} API key saved successfully!\n\nYou can now use this key for content generation.`);
       
-      // Clear the input after successful save
-      setApiKeyValues((prev) => ({ 
-        ...prev, 
-        [service]: ''
-      }));
     } catch (error) {
       console.error('Error saving API key:', error);
       showToast({
@@ -513,6 +514,7 @@ export const SettingsPanel: React.FC = () => {
 
               {apiKeyServices.map((service) => {
                 const apiKeyInfo = settings.api_keys.find((k) => k.service === service.id);
+                console.log(`Service: ${service.id}, API Key Info:`, apiKeyInfo);
                 return (
                   <ApiKeyInput
                     key={service.id}
@@ -526,7 +528,7 @@ export const SettingsPanel: React.FC = () => {
                     onChange={(value) => {
                       setApiKeyValues((prev) => ({ ...prev, [service.id]: value }));
                     }}
-                    onSave={() => handleApiKeySave(service.id)}
+                    onSave={async () => await handleApiKeySave(service.id)}
                     onRemove={() => handleApiKeyRemove(service.id)}
                     onVerify={() => handleApiKeyVerify(service.id)}
                   />
