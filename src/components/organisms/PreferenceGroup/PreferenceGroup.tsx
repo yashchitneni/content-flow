@@ -39,7 +39,7 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
               checked={item.value}
               onChange={(e) => onChange(item.id, e.target.checked)}
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            <div className="w-11 h-6 bg-dark-700 light:bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-dark-200 light:after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500 dark:peer-checked:bg-primary-400"></div>
           </label>
         );
 
@@ -48,7 +48,7 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
           <select
             value={item.value}
             onChange={(e) => onChange(item.id, e.target.value)}
-            className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="block w-full px-3 py-2 text-sm bg-dark-800 light:bg-white text-white light:text-gray-900 border border-dark-200 light:border-gray-300 rounded-md focus:ring-primary-400 focus:border-primary-400"
           >
             {item.options?.map((option) => (
               <option key={option.value} value={option.value}>
@@ -67,9 +67,9 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
               onChange={(e) => onChange(item.id, parseInt(e.target.value))}
               min={item.min}
               max={item.max}
-              className="block w-24 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="block w-24 px-3 py-2 text-sm bg-dark-800 light:bg-white text-white light:text-gray-900 border border-dark-200 light:border-gray-300 rounded-md focus:ring-primary-400 focus:border-primary-400"
             />
-            {item.unit && <span className="text-sm text-gray-500">{item.unit}</span>}
+            {item.unit && <span className="text-sm text-dark-500 light:text-gray-500">{item.unit}</span>}
           </div>
         );
 
@@ -79,7 +79,7 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
             type="text"
             value={item.value}
             onChange={(e) => onChange(item.id, e.target.value)}
-            className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="block w-full px-3 py-2 text-sm bg-dark-800 light:bg-white text-white light:text-gray-900 border border-dark-200 light:border-gray-300 rounded-md focus:ring-primary-400 focus:border-primary-400"
           />
         );
 
@@ -90,13 +90,13 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
               type="color"
               value={item.value}
               onChange={(e) => onChange(item.id, e.target.value)}
-              className="block h-10 w-20 border border-gray-300 rounded cursor-pointer"
+              className="block h-10 w-20 border border-dark-200 light:border-gray-300 rounded cursor-pointer"
             />
             <input
               type="text"
               value={item.value}
               onChange={(e) => onChange(item.id, e.target.value)}
-              className="block w-28 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="block w-28 px-3 py-2 text-sm bg-dark-800 light:bg-white text-white light:text-gray-900 border border-dark-200 light:border-gray-300 rounded-md focus:ring-primary-400 focus:border-primary-400"
             />
           </div>
         );
@@ -107,17 +107,17 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="bg-dark-800 light:bg-white rounded-lg border border-dark-200 light:border-gray-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-dark-200 light:border-gray-200">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Icon name={icon} size="sm" className="text-gray-600" />
+            <div className="p-2 bg-dark-700 light:bg-gray-100 rounded-lg">
+              <Icon name={icon} size="sm" className="text-dark-600 light:text-gray-600" />
             </div>
           )}
           <div>
-            <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-            {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+            <h3 className="text-lg font-medium text-white light:text-gray-900">{title}</h3>
+            {description && <p className="text-sm text-dark-500 light:text-gray-500 mt-1">{description}</p>}
           </div>
         </div>
       </div>
@@ -126,9 +126,9 @@ export const PreferenceGroup: React.FC<PreferenceGroupProps> = ({
         {items.map((item) => (
           <div key={item.id} className="flex items-start justify-between">
             <div className="flex-1 pr-4">
-              <label className="text-sm font-medium text-gray-700">{item.label}</label>
+              <label className="text-sm font-medium text-white light:text-gray-700">{item.label}</label>
               {item.description && (
-                <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                <p className="text-sm text-dark-500 light:text-gray-500 mt-1">{item.description}</p>
               )}
             </div>
             <div className="flex-shrink-0">{renderInput(item)}</div>

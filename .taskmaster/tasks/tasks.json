@@ -303,7 +303,7 @@
         "id": "12",
         "title": "Implement Full-Text Transcript Search",
         "description": "Create fast full-text search across all transcripts using SQLite FTS5 with highlighting",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -360,7 +360,7 @@
         "id": "14",
         "title": "Implement AI-Powered Tag Extraction",
         "description": "Create system to automatically extract relevant tags from transcript content using AI",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -387,7 +387,7 @@
         "id": "15",
         "title": "Build Transcript Library UI",
         "description": "Create the complete transcript library interface with cards, grid layout, and interactions",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -446,7 +446,7 @@
         "id": "17",
         "title": "Create Content Generation UI",
         "description": "Build the content studio interface for selecting transcripts and generating content with templates",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "assignedTo": "",
         "dependencies": [
@@ -558,7 +558,7 @@
         "id": "21",
         "title": "Create Settings Panel",
         "description": "Build comprehensive settings interface for API keys, preferences, and usage tracking",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "assignedTo": "",
         "dependencies": [
@@ -714,6 +714,121 @@
         ],
         "createdAt": "2025-01-07T12:00:00Z",
         "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "26",
+        "title": "Implement Duplicate Detection for Transcripts",
+        "description": "Create system to detect duplicate or similar transcripts using LangGraph and semantic analysis to maintain a clean, organized library",
+        "status": "pending",
+        "priority": "medium",
+        "assignedTo": "",
+        "dependencies": [
+          "14",
+          "15"
+        ],
+        "subtasks": [],
+        "details": "References: Smart Library Enhancement\nComponents: DuplicateDetection (workflow), DuplicateWarning (molecule)\nDatabase: Transcripts table with similarity scores\n\nImplementation:\n1. Create duplicate-detection.workflow.ts using LangGraph\n2. Implement semantic similarity analysis with embeddings\n3. Add content overlap percentage calculation\n4. Integrate detection into transcript import process\n5. Build UI for duplicate warnings with similarity scores\n6. Provide user options: Skip, Replace, Keep Both\n7. Add batch duplicate finder to library\n8. Store similarity scores for future reference\n\nSuccess Criteria:\n- Duplicates detected with >85% accuracy\n- Detection completes in <5s per transcript\n- UI clearly shows similarity scores\n- User choices are remembered",
+        "acceptanceCriteria": "- Semantic similarity works accurately\n- Import process checks for duplicates\n- UI provides clear choices\n- Batch detection finds all duplicates",
+        "testStrategy": "Unit tests for similarity algorithms, integration tests for import flow, UI interaction tests",
+        "effort": 3,
+        "tags": [
+          "backend",
+          "ai",
+          "smart-library",
+          "enhancement"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md"
+        ],
+        "createdAt": "2025-01-07T12:00:00Z",
+        "updatedAt": "2025-01-07T12:00:00Z"
+      },
+      {
+        "id": "27",
+        "title": "Calendar Integration for Smart Media Tagging",
+        "description": "Implement calendar integration to automatically tag imported media files based on calendar events at the time of recording. System should match file timestamps with calendar entries and apply relevant tags.",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "5"
+        ],
+        "subtasks": [],
+        "details": "References: functional-requirements.md, user-flow.md\nComponents: Media Hub enhancement\nDatabase: Tags, Files tables\n\nImplementation Strategy:\n1. Calendar API Integration\n   - Support for major calendar providers (Google Calendar, Apple Calendar)\n   - OAuth authentication for calendar access\n   - Caching of calendar events for performance\n\n2. Timestamp Matching Logic\n   - Extract creation timestamp from media files\n   - Query calendar for events during that timeframe\n   - Handle timezone conversions properly\n   - Support configurable time buffer (e.g., ±30 minutes)\n\n3. Smart Tagging Rules\n   - Primary: Direct calendar event match\n   - Secondary: Location-based if GPS data available\n   - Tertiary: Pattern recognition from folder structures\n   - Quaternary: AI content analysis of first frames\n   - Manual rules engine for custom patterns\n\n4. Fallback Mechanisms\n   - When no calendar match found\n   - Manual tag suggestion based on patterns\n   - Batch tagging for similar timestamps\n   - Learning from user corrections\n\n5. UI/UX Considerations\n   - Show calendar matches during import\n   - Allow manual override of suggested tags\n   - Bulk editing capabilities\n   - Tag confidence indicators\n\nSuccess Criteria:\n- 90%+ accuracy for calendar-matched events\n- <500ms tag suggestion time\n- Supports offline mode with cached calendar data\n- User can configure matching sensitivity",
+        "acceptanceCriteria": "- Calendar integration works with Google and Apple calendars\n- Timestamp matching achieves 90%+ accuracy\n- Tag suggestions appear within 500ms\n- Fallback mechanisms provide reasonable alternatives\n- UI clearly shows tag sources and confidence",
+        "testStrategy": "Unit tests for timestamp matching logic, integration tests with mock calendar APIs, user acceptance testing for tagging accuracy",
+        "effort": 5,
+        "tags": [
+          "calendar",
+          "integration",
+          "ai",
+          "tagging",
+          "media-hub"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T15:00:00Z",
+        "updatedAt": "2025-01-07T15:00:00Z"
+      },
+      {
+        "id": "28",
+        "title": "Implement Content Edit Functionality",
+        "description": "Add the ability to edit generated content in the Content Studio before exporting, with real-time preview and platform constraint validation",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "17",
+          "18"
+        ],
+        "subtasks": [],
+        "details": "References: functional-requirements.md (FR-047), atomic-design-system.md\nComponents: Content Studio enhancement\nDatabase: ContentVersions table for edit history\n\nImplementation Requirements:\n1. Rich Text Editor\n   - Platform-aware editing (Twitter thread vs blog post)\n   - Real-time character/word counting\n   - Constraint validation highlighting\n   - Markdown support for blog/newsletter formats\n\n2. Edit Features\n   - Inline editing for each content section\n   - Add/remove tweets or carousel slides\n   - Reorder content blocks\n   - Undo/redo functionality\n   - Auto-save drafts\n\n3. Validation\n   - Platform-specific constraints enforced\n   - Visual indicators for violations\n   - Suggestions for fixing issues\n\n4. Preview\n   - Live preview as you edit\n   - Mobile/desktop view toggle\n   - Estimated read time\n\nSuccess Criteria:\n- Edits persist across sessions\n- Constraints validated in real-time\n- Preview matches final export\n- Edit history maintained",
+        "acceptanceCriteria": "- Rich text editor works for all content types\n- Platform constraints enforced during editing\n- Changes auto-save every 30 seconds\n- Preview updates in real-time\n- Edit history tracked in database",
+        "testStrategy": "Unit tests for constraint validation, integration tests for auto-save, E2E tests for edit workflow",
+        "effort": 4,
+        "tags": [
+          "editor",
+          "content-studio",
+          "frontend",
+          "ux"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "atomic-design-system.md"
+        ],
+        "createdAt": "2025-01-07T15:30:00Z",
+        "updatedAt": "2025-01-07T15:30:00Z"
+      },
+      {
+        "id": "29",
+        "title": "Implement Export Functionality",
+        "description": "Build comprehensive export system for generated content across all platforms with appropriate formats and packaging",
+        "status": "pending",
+        "priority": "high",
+        "assignedTo": "",
+        "dependencies": [
+          "17",
+          "28"
+        ],
+        "subtasks": [],
+        "details": "References: functional-requirements.md (FR-048 to FR-050), user-flow.md (UF-005)\nComponents: Export system, Tauri file operations\nDatabase: ExportHistory table\n\nExport Formats by Platform:\n1. Twitter/X Thread\n   - Plain text with tweet numbering\n   - JSON format for automation tools\n   - Image cards for each tweet (PNG)\n   - ZIP package with all formats\n\n2. Instagram Carousel\n   - Individual slide images (1080x1080)\n   - Caption text file\n   - Hashtag suggestions\n   - ZIP with organized structure\n\n3. LinkedIn Article\n   - Markdown file\n   - HTML with formatting\n   - PDF version\n   - Header image suggestions\n\n4. YouTube Script\n   - Formatted script (PDF)\n   - Teleprompter format (.txt)\n   - Chapter markers\n   - Description template\n\n5. Blog Post\n   - Markdown with front matter\n   - HTML export\n   - WordPress XML format\n   - SEO metadata\n\nImplementation Details:\n- Use Tauri's file system API\n- Canvas API for image generation\n- PDF generation library\n- Template-based exports\n- Batch export options\n\nSuccess Criteria:\n- All formats export correctly\n- Images are high quality\n- Exports open in target apps\n- Export history tracked",
+        "acceptanceCriteria": "- Export works for all content types\n- Generated files are high quality\n- ZIP packaging works correctly\n- Export history saved to database\n- Progress indicator for long exports",
+        "testStrategy": "Unit tests for each export format, visual regression tests for images, integration tests for file operations",
+        "effort": 5,
+        "tags": [
+          "export",
+          "content-studio",
+          "backend",
+          "file-generation"
+        ],
+        "relatedDocs": [
+          "functional-requirements.md",
+          "user-flow.md"
+        ],
+        "createdAt": "2025-01-07T15:30:00Z",
+        "updatedAt": "2025-01-07T15:30:00Z"
       }
     ],
     "metadata": {
@@ -721,7 +836,7 @@
       "createdAt": "2025-01-07T12:00:00Z",
       "updatedAt": "2025-01-07T12:00:00Z",
       "projectName": "ContentFlow",
-      "totalTasks": 25,
+      "totalTasks": 29,
       "tasksPerDay": {
         "day1": 6,
         "day2": 5,

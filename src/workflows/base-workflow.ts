@@ -1,8 +1,8 @@
 import { StateGraph, StateGraphArgs } from '@langchain/langgraph';
 import { BaseMessage } from '@langchain/core/messages';
 import { WorkflowConfig } from '../config/workflow.config';
-import { getLogger, logWorkflowStart, logWorkflowComplete, logWorkflowStep, logWorkflowError } from '../lib/logger';
-import { createErrorHandler, withRetry, WorkflowError } from '../lib/error-handler';
+import { getLogger, logWorkflowStart, logWorkflowComplete, logWorkflowStep, logWorkflowError } from '../lib/browser-logger';
+import { createErrorHandler, withRetry, WorkflowError } from '../lib/browser-error-handler';
 
 export interface BaseWorkflowState {
   messages: BaseMessage[];
@@ -37,15 +37,33 @@ export abstract class BaseWorkflow<TState extends BaseWorkflowState> {
   }
   
   public async execute(input: Partial<TState>): Promise<TState> {
+    console.log(`[${this.name}] Execute called with input:`, {
+      hasMessages: !!(input as any).messages,
+      hasTranscripts: !!(input as any).transcripts,
+      transcriptCount: (input as any).transcripts?.length,
+      templateType: (input as any).template?.type
+    });
+    
     logWorkflowStart(this.name, input);
     
     try {
+      console.log(`[${this.name}] Compiling workflow...`);
       const workflow = await this.compile();
+      
+      console.log(`[${this.name}] Invoking workflow...`);
       const result = await workflow.invoke(input as TState);
+      
+      console.log(`[${this.name}] Workflow complete. Result:`, {
+        hasError: !!result.error,
+        error: result.error,
+        hasGeneratedContent: !!(result as any).generatedContent,
+        contentPreview: (result as any).generatedContent?.content?.substring?.(0, 100)
+      });
       
       logWorkflowComplete(this.name, result);
       return result;
     } catch (error) {
+      console.error(`[${this.name}] Workflow execution failed:`, error);
       if (error instanceof WorkflowError) {
         throw error;
       }

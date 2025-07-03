@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test LocalStorage</title>
+</head>
+<body>
+    <h1>Test LocalStorage for ContentFlow</h1>
+    <button onclick="testStore()">Test Store API Key</button>
+    <button onclick="checkStore()">Check Stored Key</button>
+    <button onclick="clearStore()">Clear Storage</button>
+    <pre id="output"></pre>
+
+    <script>
+        function testStore() {
+            const testData = {
+                state: {
+                    apiKeys: {
+                        openai: 'sk-test-key-123'
+                    },
+                    transcripts: []
+                }
+            };
+            localStorage.setItem('contentflow-storage', JSON.stringify(testData));
+            document.getElementById('output').textContent = 'Stored: ' + JSON.stringify(testData, null, 2);
+        }
+
+        function checkStore() {
+            const stored = localStorage.getItem('contentflow-storage');
+            document.getElementById('output').textContent = 'Current: ' + (stored || 'Nothing stored');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    document.getElementById('output').textContent += '\n\nParsed: ' + JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    document.getElementById('output').textContent += '\n\nError parsing: ' + e.message;
+                }
+            }
+        }
+
+        function clearStore() {
+            localStorage.removeItem('contentflow-storage');
+            document.getElementById('output').textContent = 'Storage cleared';
+        }
+    </script>
+</body>
+</html>

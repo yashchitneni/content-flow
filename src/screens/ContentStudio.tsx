@@ -1,68 +1,31 @@
 // Task #17: Create Content Generation UI
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { TemplateSelector, ContentTemplate } from '../components/molecules/TemplateSelector';
 import { TranscriptDropZone, TranscriptSummary, FileData } from '../components/molecules/TranscriptDropZone';
+import { ContentPreviewModal } from '../components/molecules/ContentPreviewModal';
 import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
+import { useAppStore } from '../store/app.store';
+import WorkflowOrchestrator from '../workflows';
+// import { generateMockContent, MockGenerationResult } from '../lib/mock-content-generator';
 
 export const ContentStudio: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<ContentTemplate | undefined>();
-  const [selectedTranscripts, setSelectedTranscripts] = useState<string[]>([]);
-  const [availableTranscripts, setAvailableTranscripts] = useState<TranscriptSummary[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [step, setStep] = useState<'transcripts' | 'templates' | 'generate'>('templates');
-
-  useEffect(() => {
-    loadTranscripts();
-  }, []);
-
-  const loadTranscripts = async () => {
-    try {
-      // Always use mock data for demo - bypasses Tauri import issues
-      const mockTranscripts: TranscriptSummary[] = [
-        {
-          id: '1',
-          filename: 'sample-interview.txt',
-          word_count: 1245,
-          language: 'en',
-          content_preview: 'Welcome to our discussion about AI and content creation. Today we will explore how artificial intelligence is transforming the way we create and consume content across various platforms. We will dive deep into the implications of this technology.',
-          imported_at: '2024-01-15T10:30:00Z',
-          status: 'imported'
-        },
-        {
-          id: '2', 
-          filename: 'product-demo.srt',
-          word_count: 890,
-          language: 'en',
-          content_preview: 'In this demo, I will show you the key features of our new platform. Starting with the dashboard, you can see all your projects organized in a clean interface. The video analysis shows both horizontal and vertical content.',
-          imported_at: '2024-01-15T09:15:00Z',
-          status: 'imported'
-        },
-        {
-          id: '3',
-          filename: 'marketing-meeting.txt', 
-          word_count: 1567,
-          language: 'en',
-          content_preview: 'Our marketing strategy for Q1 focuses on social media engagement and content creation workflows. We discussed the importance of repurposing video content across multiple platforms including Instagram, Twitter, and LinkedIn.',
-          imported_at: '2024-01-15T08:45:00Z',
-          status: 'imported'
-        }
-      ];
-      setAvailableTranscripts(mockTranscripts);
-    } catch (error) {
-      console.error('Error loading transcripts:', error);
-      // Fallback to mock data if Tauri fails
-      setAvailableTranscripts([{
-        id: 'demo',
-        filename: 'demo-transcript.txt',
-        word_count: 500,
-        language: 'en',
-        content_preview: 'This is a demo transcript for testing the template system...',
-        imported_at: new Date().toISOString(),
-        status: 'imported'
-      }]);
-    }
-  };
+  const [step, setStep] = useState<'transcripts' | 'templates' | 'generate'>('transcripts');
+  const [generatedContent, setGeneratedContent] = useState<any | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  
+  // Use global store for transcripts and API keys
+  const { 
+    transcripts, 
+    selectedTranscriptIds, 
+    setSelectedTranscripts, 
+    addTranscripts, 
+    hasApiKey, 
+    apiKeys,
+    addNotification 
+  } = useAppStore();
 
   const handleTranscriptsImported = (fileData: FileData[] | string[]) => {
     // Handle both file data and string array for backward compatibility
@@ -70,34 +33,25 @@ export const ContentStudio: React.FC = () => {
       if (typeof fileData[0] === 'string') {
         // Legacy string array handling
         setSelectedTranscripts(fileData as string[]);
-        loadTranscripts();
       } else {
         // New file data handling
         const files = fileData as FileData[];
-        const newTranscripts: TranscriptSummary[] = files.map((file, index) => {
-          const wordCount = file.content.split(/\s+/).length;
-          const preview = file.content.substring(0, 300) + (file.content.length > 300 ? '...' : '');
-          
-          return {
-            id: `imported-${Date.now()}-${index}`,
-            filename: file.name,
-            word_count: wordCount,
-            language: 'en',
-            content_preview: preview,
-            full_content: file.content, // Store full content
-            imported_at: new Date().toISOString(),
-            status: 'imported' as const
-          };
-        });
         
-        // Add to available transcripts (replace mock data)
-        setAvailableTranscripts(prev => [...newTranscripts, ...prev.filter(t => !t.id.startsWith('imported-'))]);
+        // For now, just add to local state without Tauri
+        const newTranscripts = files.map((file, index) => ({
+          id: `imported-${Date.now()}-${index}`,
+          filename: file.name,
+          word_count: file.content.split(/\s+/).length,
+          language: 'en',
+          content_preview: file.content.substring(0, 200) + '...',
+          full_content: file.content,
+          imported_at: new Date().toISOString(),
+          status: 'imported' as const
+        }));
         
-        // Auto-select the new transcripts
+        addTranscripts(newTranscripts);
         setSelectedTranscripts(newTranscripts.map(t => t.id));
-        
-        // Show success message
-        alert(`✅ Successfully imported ${files.length} transcript${files.length > 1 ? 's' : ''}!\n\nYour file${files.length > 1 ? 's are' : ' is'} ready for content generation.`);
+        addNotification('success', `Successfully imported ${files.length} transcript${files.length > 1 ? 's' : ''}!`);
       }
       
       // Move to template selection
@@ -111,55 +65,75 @@ export const ContentStudio: React.FC = () => {
       e.preventDefault();
     }
     
-    if (!selectedTemplate || availableTranscripts.length === 0) return;
+    console.log('=== CONTENT GENERATION DEBUG START ===');
+    console.log('[ContentStudio] Generate button clicked');
+    console.log('[ContentStudio] Selected template:', selectedTemplate);
+    console.log('[ContentStudio] Selected transcript IDs:', selectedTranscriptIds);
+    console.log('[ContentStudio] Number of transcripts available:', transcripts.length);
+    console.log('[ContentStudio] API keys status:', {
+      hasOpenAI: !!apiKeys.openai,
+      openAILength: apiKeys.openai?.length,
+      hasClaude: !!apiKeys.claude,
+      claudeLength: apiKeys.claude?.length
+    });
+    console.log('[ContentStudio] localStorage check:', localStorage.getItem('contentflow-storage'));
     
-    // Check if API key exists
-    const savedKeys = localStorage.getItem('contentflow-api-keys');
-    const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
+    // Parse localStorage to check actual stored value
+    try {
+      const stored = localStorage.getItem('contentflow-storage');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        console.log('[ContentStudio] Parsed localStorage:', parsed);
+        console.log('[ContentStudio] Stored apiKeys:', parsed.state?.apiKeys);
+      }
+    } catch (e) {
+      console.error('[ContentStudio] Failed to parse localStorage:', e);
+    }
     
-    if (!apiKeys.openai) {
-      alert('⚠️ OpenAI API Key Required\n\nPlease add your OpenAI API key in Settings before generating content.\n\n1. Click "Settings" button\n2. Enter your OpenAI API key\n3. Click "Save"\n4. Return here to generate content');
+    if (!selectedTemplate || transcripts.length === 0) {
+      console.error('[ContentStudio] Missing template or transcripts');
+      return;
+    }
+    
+    // Check if API key exists in global store
+    if (!hasApiKey('openai')) {
+      console.error('[ContentStudio] No OpenAI API key found');
+      addNotification('error', 'OpenAI API Key required. Please add it in Settings.');
       return;
     }
     
     setIsGenerating(true);
     
     try {
-      // Import WorkflowOrchestrator dynamically
-      const { default: WorkflowOrchestrator } = await import('../workflows');
+      // Use real LangGraph workflow
+      console.log('[ContentStudio] Using LangGraph workflow');
+      console.log('[ContentStudio] Selected template:', selectedTemplate);
+      console.log('[ContentStudio] Selected transcripts:', selectedTranscriptIds);
+      console.log('[ContentStudio] API Keys:', { openai: !!apiKeys.openai });
       
-      // Initialize orchestrator with saved API key
-      const orchestrator = new WorkflowOrchestrator({
-        aiProvider: 'openai',
-        apiKeys: {
-          openai: apiKeys.openai,
-          anthropic: apiKeys.claude || process.env.ANTHROPIC_API_KEY,
-        },
-        logging: { level: 'info', format: 'pretty' }
-      });
+      // Prepare transcript data - use selected transcripts
+      const selectedTranscriptData = transcripts.filter(t => selectedTranscriptIds.includes(t.id));
+      console.log('[ContentStudio] Selected transcript data:', selectedTranscriptData.length, 'transcripts');
+      console.log('[ContentStudio] First transcript sample:', selectedTranscriptData[0]);
       
-      // Prepare transcript data for LangGraph - use full content if available
-      const transcriptData = availableTranscripts
-        .filter(t => selectedTranscripts.includes(t.id))
-        .map(transcript => ({
-          id: transcript.id,
-          content: transcript.full_content || transcript.content_preview,
-          analysis: {
-            summary: `Analysis of ${transcript.filename}`,
-            keyPoints: ['Key point 1', 'Key point 2', 'Key point 3'],
-            tags: ['AI', 'Content', 'Creation']
-          }
-        }));
+      if (selectedTranscriptData.length === 0) {
+        console.error('[ContentStudio] No transcripts selected!');
+        addNotification('error', 'Please select at least one transcript');
+        setIsGenerating(false);
+        return;
+      }
       
-      // Map template names to LangGraph template types
-      const templateMap: Record<string, 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script'> = {
-        'twitter-thread': 'thread',
-        'instagram-carousel': 'carousel', 
-        'linkedin-article': 'blog',
-        'youtube-script': 'video-script'
-      };
+      const transcriptData = selectedTranscriptData.map(transcript => ({
+        id: transcript.id,
+        content: transcript.full_content || transcript.content_preview || transcript.content
+      }));
       
-      const langGraphTemplate = templateMap[selectedTemplate || 'twitter-thread'];
+      console.log('[ContentStudio] Transcript data prepared:', transcriptData.map(t => ({
+        id: t.id,
+        contentLength: t.content?.length || 0,
+        contentSample: t.content?.substring(0, 100) + '...'
+      })));
+      
       const templateConstraints = {
         'twitter-thread': { maxLength: 280, maxTweets: 10 },
         'instagram-carousel': { maxSlides: 10, maxCaptionLength: 2200 },
@@ -167,86 +141,112 @@ export const ContentStudio: React.FC = () => {
         'youtube-script': { targetDuration: '5-10 minutes' }
       };
       
-      // 🚀 LANGGRAPH INTEGRATION - REAL AI GENERATION!
-      const result = await orchestrator.generateContent(
+      // Initialize workflow with API key
+      const workflow = new WorkflowOrchestrator({
+        apiKeys: {
+          openai: apiKeys.openai || '',
+          anthropic: apiKeys.claude || ''
+        },
+        aiProvider: apiKeys.openai ? 'openai' : 'anthropic'
+      });
+      
+      // Map template names to workflow types
+      const templateTypeMap: Record<string, 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script'> = {
+        'twitter-thread': 'thread',
+        'instagram-carousel': 'carousel',
+        'linkedin-article': 'blog',
+        'youtube-script': 'video-script'
+      };
+      
+      // Generate content using LangGraph
+      const result = await workflow.generateContent(
         transcriptData,
-        langGraphTemplate,
+        templateTypeMap[selectedTemplate || 'twitter-thread'] || 'thread',
         templateConstraints[selectedTemplate || 'twitter-thread']
       );
       
+      console.log('[ContentStudio] Workflow execution complete. Full result:', result);
       setIsGenerating(false);
       
-      if (result.error) {
-        alert(`Error generating content: ${result.error}`);
-      } else if (result.generatedContent) {
-        // Show the generated content - in real app this would open in editor
-        const content = Array.isArray(result.generatedContent.content) 
-          ? result.generatedContent.content.join('\n\n')
-          : result.generatedContent.content;
-          
-        alert(`🎉 LangGraph Generated Content!\n\nTitle: ${result.generatedContent.title}\n\nContent:\n${content.substring(0, 300)}...`);
+      if (result && result.generatedContent) {
+        // Show the generated content
+        const { generatedContent } = result;
+        const content = Array.isArray(generatedContent.content) 
+          ? generatedContent.content.join('\n\n')
+          : generatedContent.content;
+        
+        console.log('[ContentStudio] Generated content details:', {
+          title: generatedContent.title,
+          format: generatedContent.format,
+          wordCount: generatedContent.metadata?.wordCount,
+          contentType: typeof generatedContent.content,
+          contentLength: content?.length
+        });
+        
+        addNotification('success', 'Content generated successfully!');
+        
+        // Store the generated content and show preview
+        setGeneratedContent(generatedContent);
+        setShowPreview(true);
       } else {
-        alert('Content generated successfully! (No content returned - check logs)');
+        console.error('[ContentStudio] No content generated. Result:', result);
+        console.error('[ContentStudio] Result error:', result?.error);
+        addNotification('error', result?.error || 'No content was generated');
       }
       
     } catch (error) {
-      console.error('LangGraph generation error:', error);
+      console.error('[ContentStudio] Generation error:', error);
       setIsGenerating(false);
-      
-      // Fallback demo content for when API keys aren't configured
-      const templateNames = {
-        'twitter-thread': 'Twitter Thread',
-        'instagram-carousel': 'Instagram Carousel',
-        'linkedin-article': 'LinkedIn Article',
-        'youtube-script': 'YouTube Script'
-      };
-      alert(`🚀 LangGraph Demo!\n\nGenerated ${templateNames[selectedTemplate || 'twitter-thread']} content from ${selectedTranscripts.length} transcript(s)!\n\nTemplate: ${templateNames[selectedTemplate || 'twitter-thread']}\n\n(Configure OpenAI API key in Settings for real AI generation)`);
+      addNotification('error', `Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-theme-primary p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-3xl font-bold text-theme-primary dark:bg-gradient-text dark:bg-clip-text dark:text-transparent mb-2">
             Content Studio
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-theme-secondary">
             Transform your Descript transcripts into engaging social media content
           </p>
         </div>
 
-        {/* Step Indicator */}
+        {/* Premium Step Indicator */}
         <div className="mb-8">
           <div className="flex items-center space-x-4">
             {['transcripts', 'templates', 'generate'].map((stepName, index) => (
               <div key={stepName} className="flex items-center">
                 <div 
                   className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                    w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium
+                    transition-all duration-300 transform
                     ${step === stepName || 
-                      (stepName === 'transcripts' && availableTranscripts.length > 0) || 
+                      (stepName === 'transcripts' && transcripts.length > 0) || 
                       (stepName === 'templates' && selectedTemplate) ||
                       (stepName === 'generate' && selectedTemplate && step === 'generate')
-                      ? 'bg-primary-500 text-white' 
-                      : 'bg-gray-200 text-gray-600'
+                      ? 'bg-gradient-button-primary text-white shadow-glow scale-110' 
+                      : 'glass text-theme-tertiary hover:scale-105'
                     }
                   `}
                 >
                   {index + 1}
                 </div>
-                <span className="ml-2 text-sm font-medium text-gray-700 capitalize">
+                <span className="ml-3 text-sm font-medium text-theme-secondary capitalize">
                   {stepName}
                 </span>
-                {index < 2 && <div className="w-8 h-px bg-gray-300 ml-4" />}
+                {index < 2 && (
+                  <div className="w-12 h-px bg-gradient-to-r from-theme to-transparent ml-4" />
+                )}
               </div>
             ))}
           </div>
         </div>
 
         {/* Step 1: Transcript Import */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="glass-ultra rounded-xl shadow-theme-glass border border-theme p-8 mb-6 hover-lift">
+          <h2 className="text-xl font-semibold text-theme-primary mb-4">
             Step 1: Import Descript Transcripts
           </h2>
           
@@ -255,41 +255,49 @@ export const ContentStudio: React.FC = () => {
             className="mb-6"
           />
           
-          {availableTranscripts.length > 0 && (
+          {transcripts.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Available Transcripts ({availableTranscripts.length})
+              <h3 className="text-lg font-medium text-theme-primary mb-4">
+                Available Transcripts ({transcripts.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {availableTranscripts.map((transcript) => (
+                {transcripts.map((transcript) => (
                   <div 
                     key={transcript.id} 
-                    className={`border rounded-lg p-4 transition-all ${
-                      transcript.id.startsWith('imported-') 
-                        ? 'border-green-300 bg-green-50' 
-                        : 'border-gray-200'
+                    onClick={() => {
+                      if (selectedTranscriptIds.includes(transcript.id)) {
+                        setSelectedTranscripts(selectedTranscriptIds.filter(id => id !== transcript.id));
+                      } else {
+                        setSelectedTranscripts([...selectedTranscriptIds, transcript.id]);
+                      }
+                    }}
+                    className={`glass rounded-lg p-4 transition-all cursor-pointer hover-lift ${
+                      selectedTranscriptIds.includes(transcript.id)
+                        ? 'border-primary-500 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 shadow-glow-subtle' 
+                        : 'border-theme hover:shadow-md'
                     }`}
                   >
                     <div className="flex items-start justify-between">
-                      <h4 className="font-medium text-gray-900 truncate flex-1">{transcript.filename}</h4>
-                      {transcript.id.startsWith('imported-') && (
-                        <Icon name="check-circle" className="w-4 h-4 text-green-600 ml-2 flex-shrink-0" />
+                      <h4 className="font-medium text-theme-primary truncate flex-1">{transcript.filename}</h4>
+                      {selectedTranscriptIds.includes(transcript.id) && (
+                        <Icon name="check-circle" className="w-5 h-5 text-primary-400 ml-2 flex-shrink-0 animate-pulse" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{transcript.word_count} words</p>
-                    <p className="text-xs text-gray-500 mt-2 line-clamp-3">{transcript.content_preview}</p>
+                    <p className="text-sm text-theme-secondary mt-1">{transcript.word_count} words</p>
+                    <p className="text-xs text-theme-tertiary mt-2 line-clamp-3">{transcript.content_preview}</p>
                   </div>
                 ))}
               </div>
               
-              {availableTranscripts.length > 0 && step === 'transcripts' && (
+              {transcripts.length > 0 && step === 'transcripts' && (
                 <div className="mt-6">
                   <Button
                     variant="primary"
                     onClick={() => setStep('templates')}
+                    disabled={selectedTranscriptIds.length === 0}
                     icon={<Icon name="chevron-right" className="w-4 h-4" />}
                   >
-                    Continue to Templates
+                    Continue to Templates ({selectedTranscriptIds.length} selected)
                   </Button>
                 </div>
               )}
@@ -299,8 +307,8 @@ export const ContentStudio: React.FC = () => {
 
         {/* Step 2: Template Selection */}
         {(step === 'templates' || step === 'generate') && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className="glass-ultra rounded-xl shadow-theme-glass border border-theme p-8 mb-6 hover-lift animate-fade-in">
+            <h2 className="text-xl font-semibold text-theme-primary mb-4">
               Step 2: Choose Content Template
             </h2>
             
@@ -317,18 +325,18 @@ export const ContentStudio: React.FC = () => {
 
         {/* Step 3: Generate Content */}
         {step === 'generate' && selectedTemplate && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className="glass-ultra rounded-xl shadow-theme-glass border border-theme p-8 animate-fade-in">
+            <h2 className="text-xl font-semibold text-theme-primary mb-4">
               Step 3: Generate Content
             </h2>
             
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+            <div className="glass rounded-lg p-6 mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-gray-900">Ready to Generate</h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h3 className="font-medium text-theme-primary">Ready to Generate</h3>
+                  <p className="text-sm text-theme-secondary mt-1">
                     Template: {selectedTemplate.replace('-', ' ')} • 
-                    Transcripts: {availableTranscripts.length} available
+                    Transcripts: {selectedTranscriptIds.length} selected
                   </p>
                 </div>
                 
@@ -345,43 +353,36 @@ export const ContentStudio: React.FC = () => {
             </div>
             
             {/* API Key Warning */}
-            {(() => {
-              const savedKeys = localStorage.getItem('contentflow-api-keys');
-              const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
-              if (!apiKeys.openai) {
-                return (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <Icon name="alert-triangle" className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm text-yellow-800">
-                        <div className="font-medium mb-1">API Key Required</div>
-                        <div>Please add your OpenAI API key in Settings to generate content with AI.</div>
-                        <ol className="list-decimal list-inside mt-2 space-y-1">
-                          <li>Click "Settings" button in the top right</li>
-                          <li>Enter your OpenAI API key</li>
-                          <li>Click "Save"</li>
-                          <li>Return here to generate content</li>
-                        </ol>
-                      </div>
-                    </div>
+            {!hasApiKey('openai') && (
+              <div className="glass border border-warning-400/30 rounded-lg p-4 bg-gradient-to-br from-warning-500/10 to-transparent">
+                <div className="flex items-start space-x-3">
+                  <Icon name="alert-triangle" className="w-5 h-5 text-warning-400 flex-shrink-0 mt-0.5 animate-pulse" />
+                  <div className="text-sm text-theme-primary">
+                    <div className="font-medium mb-1 text-warning-400">API Key Required</div>
+                    <div className="text-theme-secondary">Please add your OpenAI API key in Settings to generate content with AI.</div>
+                    <ol className="list-decimal list-inside mt-2 space-y-1 text-theme-tertiary">
+                      <li>Click "Settings" button in the top right</li>
+                      <li>Enter your OpenAI API key</li>
+                      <li>Click "Save"</li>
+                      <li>Return here to generate content</li>
+                    </ol>
                   </div>
-                );
-              }
-              return null;
-            })()}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Help Section */}
-        <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="mt-6 bg-green-50 dark:bg-success-900/20 border border-green-200 dark:border-success-500/30 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <Icon name="check-circle" className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-green-800">
+            <Icon name="check-circle" className="w-5 h-5 text-green-600 dark:text-success-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-green-800 dark:text-success-300">
               <div className="font-medium mb-1">Live Folder System Ready!</div>
               <div>Your workflow:</div>
               <ol className="list-decimal list-inside mt-2 space-y-1">
                 <li>Export transcript from Descript as .txt or .srt</li>
-                <li>Drop the file here or click "Browse Files"</li>
+                <li>Drop the file here or click anywhere in the box</li>
                 <li>Select template and generate content</li>
                 <li>Content will be created using LangGraph workflows</li>
               </ol>
@@ -389,6 +390,26 @@ export const ContentStudio: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Content Preview Modal */}
+      {generatedContent && (
+        <ContentPreviewModal
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          title={generatedContent.title}
+          content={generatedContent.content}
+          format={generatedContent.format}
+          metadata={generatedContent.metadata}
+          onEdit={() => {
+            setShowPreview(false);
+            addNotification('info', 'Edit functionality coming soon!');
+          }}
+          onExport={() => {
+            setShowPreview(false);
+            addNotification('info', 'Export functionality coming soon!');
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -4,12 +4,16 @@ export interface BadgeProps {
   children: React.ReactNode
   variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'
   size?: 'sm' | 'md' | 'lg'
+  className?: string
+  onClick?: (e: React.MouseEvent) => void
 }
 
 export const Badge: React.FC<BadgeProps> = ({
   children,
   variant = 'primary',
-  size = 'md'
+  size = 'md',
+  className = '',
+  onClick
 }) => {
   const baseClasses = `
     inline-flex items-center justify-center
@@ -33,7 +37,11 @@ export const Badge: React.FC<BadgeProps> = ({
   }
 
   return (
-    <span className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]}`}>
+    <span 
+      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+      onClick={onClick}
+      style={onClick ? { cursor: 'pointer' } : undefined}
+    >
       {children}
     </span>
   )

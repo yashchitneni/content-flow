@@ -1,10 +1,13 @@
+// Import polyfills first
+import '../lib/browser-polyfills';
+
 export * from './base-workflow';
 export * from './transcript-analysis.workflow';
 export * from './content-generation.workflow';
 export * from './multi-source.workflow';
 
 import { WorkflowConfig, loadConfig } from '../config/workflow.config';
-import { initializeLogger } from '../lib/logger';
+import { initializeLogger } from '../lib/browser-logger';
 import { TranscriptAnalysisWorkflow } from './transcript-analysis.workflow';
 import { ContentGenerationWorkflow } from './content-generation.workflow';
 import { MultiSourceWorkflow } from './multi-source.workflow';
@@ -16,7 +19,13 @@ export class WorkflowOrchestrator {
   private multiSource: MultiSourceWorkflow;
   
   constructor(configOverrides?: Partial<WorkflowConfig>) {
+    console.log('[WorkflowOrchestrator] Initializing with config overrides:', configOverrides);
     this.config = loadConfig(configOverrides);
+    console.log('[WorkflowOrchestrator] Loaded config:', {
+      provider: this.config.aiProvider,
+      hasOpenAIKey: !!this.config.apiKeys.openai,
+      openAIKeyLength: this.config.apiKeys.openai?.length
+    });
     initializeLogger(this.config.logging);
     
     this.transcriptAnalysis = new TranscriptAnalysisWorkflow(this.config);
@@ -36,14 +45,34 @@ export class WorkflowOrchestrator {
     templateType: 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script',
     templateConstraints?: Record<string, any>
   ) {
-    return this.contentGeneration.execute({
-      transcripts,
-      template: {
-        type: templateType,
-        constraints: templateConstraints,
-      },
-      messages: [],
+    console.log('[WorkflowOrchestrator] generateContent called with:', {
+      transcriptCount: transcripts.length,
+      templateType,
+      templateConstraints,
+      firstTranscriptSample: transcripts[0]?.content?.substring(0, 100)
     });
+    
+    try {
+      const result = await this.contentGeneration.execute({
+        transcripts,
+        template: {
+          type: templateType,
+          constraints: templateConstraints,
+        },
+        messages: [],
+      });
+      
+      console.log('[WorkflowOrchestrator] Content generation result:', {
+        success: !!result,
+        hasGeneratedContent: !!result?.generatedContent,
+        error: result?.error
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('[WorkflowOrchestrator] Content generation failed:', error);
+      throw error;
+    }
   }
   
   async processMultipleSources(

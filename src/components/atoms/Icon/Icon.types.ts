@@ -27,7 +27,23 @@ export type IconName =
   | 'image'
   | 'message-circle'
   | 'file-text'
-  | 'chevron-right';
+  | 'chevron-right'
+  | 'chevron-down'
+  | 'arrow-up'
+  | 'arrow-down'
+  | 'edit'
+  | 'download'
+  | 'grid'
+  | 'list'
+  | 'info'
+  | 'inbox'
+  | 'clock'
+  | 'search'
+  | 'filter'
+  | 'loader'
+  | 'plus'
+  | 'film'
+  | 'calendar';
 
 export interface IconProps {
   name: IconName;

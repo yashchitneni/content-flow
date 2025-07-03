@@ -1,7 +1,4 @@
 import { z } from 'zod';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export const WorkflowConfigSchema = z.object({
   aiProvider: z.enum(['openai', 'anthropic']).default('openai'),
@@ -38,11 +35,21 @@ export const WorkflowConfigSchema = z.object({
 
 export type WorkflowConfig = z.infer<typeof WorkflowConfigSchema>;
 
+// Browser-compatible environment variable access
+const getEnvVar = (key: string): string | undefined => {
+  // In a browser environment, these would typically come from:
+  // 1. Build-time environment variables (Vite's import.meta.env)
+  // 2. Runtime configuration loaded from a server
+  // 3. Local storage for development
+  // For now, we'll use empty strings to avoid errors
+  return undefined;
+};
+
 export const defaultConfig: WorkflowConfig = {
   aiProvider: 'openai',
   apiKeys: {
-    openai: process.env.OPENAI_API_KEY,
-    anthropic: process.env.ANTHROPIC_API_KEY,
+    openai: getEnvVar('OPENAI_API_KEY'),
+    anthropic: getEnvVar('ANTHROPIC_API_KEY'),
   },
   models: {
     analysis: 'gpt-4-turbo-preview',

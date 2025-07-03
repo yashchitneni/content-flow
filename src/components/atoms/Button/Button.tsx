@@ -4,39 +4,49 @@ import { Spinner } from '../Spinner'
 
 const variantStyles = {
   primary: `
-    bg-primary-500 text-white border-none
-    hover:bg-primary-600 hover:-translate-y-px
+    bg-gradient-button-primary text-white border-none shadow-glow-subtle
+    hover:bg-gradient-button-hover hover:scale-102 hover:-translate-y-0.5 hover:shadow-glow
     focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
-    active:bg-primary-700 active:translate-y-0
-    disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:transform-none
+    active:scale-98 active:translate-y-0
+    disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
+    focus:ring-offset-white dark:focus:ring-offset-gray-900
+    transition-all duration-300 ease-out
   `,
   secondary: `
-    bg-secondary-500 text-white border-none
-    hover:bg-secondary-600 hover:-translate-y-px
-    focus:outline-none focus:ring-2 focus:ring-secondary-400 focus:ring-offset-2
-    active:bg-secondary-700 active:translate-y-0
-    disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:transform-none
+    glass text-theme-primary border-theme
+    hover:scale-102 hover:-translate-y-0.5 hover:shadow-md
+    focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
+    active:scale-98 active:translate-y-0
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:backdrop-filter-none
+    focus:ring-offset-white dark:focus:ring-offset-gray-900
+    transition-all duration-300 ease-out
   `,
   tertiary: `
-    bg-gray-100 text-gray-900 border border-gray-300
-    hover:bg-gray-200 hover:-translate-y-px
-    focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-    active:bg-gray-300 active:translate-y-0
-    disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed disabled:transform-none
+    bg-transparent text-theme-secondary border border-theme
+    hover:bg-theme-hover hover:text-theme-primary hover:scale-102 hover:-translate-y-0.5
+    focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
+    active:scale-98 active:translate-y-0
+    disabled:text-theme-disabled disabled:cursor-not-allowed disabled:bg-transparent disabled:transform-none
+    focus:ring-offset-white dark:focus:ring-offset-gray-900
+    transition-all duration-300 ease-out
   `,
   ghost: `
-    bg-transparent text-gray-700 border border-transparent
-    hover:bg-gray-100 hover:border-gray-200
-    focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-    active:bg-gray-200
-    disabled:text-gray-400 disabled:cursor-not-allowed disabled:bg-transparent disabled:border-transparent
+    bg-transparent text-theme-secondary border border-transparent
+    hover:bg-theme-hover hover:text-theme-primary hover:scale-102 hover:-translate-y-0.5
+    focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
+    active:scale-98
+    disabled:text-theme-disabled disabled:cursor-not-allowed disabled:bg-transparent disabled:border-transparent disabled:transform-none
+    focus:ring-offset-white dark:focus:ring-offset-gray-900
+    transition-all duration-300 ease-out
   `,
   destructive: `
-    bg-error-500 text-white border-none
-    hover:bg-red-600 hover:-translate-y-px
+    bg-error-500 text-white border-none shadow-md
+    hover:bg-error-600 hover:scale-102 hover:-translate-y-0.5 hover:shadow-glow-subtle
     focus:outline-none focus:ring-2 focus:ring-error-400 focus:ring-offset-2
-    active:bg-red-700 active:translate-y-0
-    disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:transform-none
+    active:scale-98 active:bg-error-700 active:translate-y-0
+    disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
+    focus:ring-offset-white dark:focus:ring-offset-gray-900
+    transition-all duration-300 ease-out
   `,
 }
 
@@ -63,11 +73,12 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const baseStyles = `
     inline-flex items-center justify-center 
-    font-medium rounded-md 
+    font-medium rounded-lg 
     transition-all duration-300
     transform-gpu
     touch-manipulation
     select-none
+    relative overflow-hidden
   `
   
   const widthStyles = fullWidth ? 'w-full' : ''

@@ -19,7 +19,7 @@ interface ErrorBoundaryState {
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  private resetTimeoutId: NodeJS.Timeout | null = null;
+  private resetTimeoutId: number | null = null;
   private previousResetKeys: Array<string | number> = [];
 
   constructor(props: ErrorBoundaryProps) {
@@ -99,7 +99,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       clearTimeout(this.resetTimeoutId);
     }
     
-    this.resetTimeoutId = setTimeout(() => {
+    this.resetTimeoutId = window.setTimeout(() => {
       this.resetErrorBoundary();
     }, delay);
   }
@@ -227,7 +227,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               Try Again
             </button>
             
-            {process.env.NODE_ENV === 'development' && error && (
+            {import.meta.env.DEV && error && (
               <details style={detailsStyles}>
                 <summary style={{ cursor: 'pointer', marginBottom: spacing[2] }}>
                   Error Details (Development Only)

@@ -16,6 +16,7 @@ export const Progress: React.FC<ProgressProps> = ({
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100)
 
   const sizeStyles = {
+    sm: 'h-1',
     small: 'h-1',
     medium: 'h-2',
     large: 'h-3'

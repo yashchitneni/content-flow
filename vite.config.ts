@@ -1,9 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    nodePolyfills({
+      include: ['process', 'util', 'stream', 'buffer', 'events'],
+      globals: {
+        process: true,
+        Buffer: true,
+        global: true,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -15,7 +26,15 @@ export default defineConfig({
       '@tokens': path.resolve(__dirname, './src/tokens'),
       '@lib': path.resolve(__dirname, './src/lib'),
       '@workflows': path.resolve(__dirname, './src/workflows'),
+      // Polyfill Node.js modules
+      'node:async_hooks': path.resolve(__dirname, './src/lib/async-hooks-polyfill.ts'),
+      'async_hooks': path.resolve(__dirname, './src/lib/async-hooks-polyfill.ts'),
     },
+  },
+  define: {
+    // Define global constants
+    'process.env': {},
+    global: 'globalThis',
   },
   clearScreen: false,
   server: {

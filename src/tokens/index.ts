@@ -7,7 +7,7 @@ export * from './animation'
 export * from './breakpoints'
 export * from './zIndex'
 
-import { colors } from './colors'
+import { colors, gradients } from './colors'
 import { typography } from './typography'
 import { spacing } from './spacing'
 import { borders } from './borders'
@@ -18,6 +18,7 @@ import { zIndex } from './zIndex'
 
 export const tokens = {
   colors,
+  gradients,
   typography,
   spacing,
   borders,

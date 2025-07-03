@@ -53,6 +53,8 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
   };
 
   const handleSave = async () => {
+    console.log('[ApiKeyInput] Attempting to save with value:', tempValue ? 'PROVIDED' : 'EMPTY');
+    
     if (!tempValue.trim()) {
       alert('Please enter a valid API key');
       return;
@@ -78,6 +80,7 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    console.log('[ApiKeyInput] Value changed, length:', newValue.length);
     setTempValue(newValue);
     onChange(newValue);
   };
@@ -94,12 +97,12 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-white">{label}</label>
         {isSet && !isEditing && (
           <div className="flex items-center gap-2">
             <Badge variant="success" size="sm">Configured</Badge>
             {createdAt && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-dark-500">
                 Added {new Date(createdAt).toLocaleDateString()}
               </span>
             )}
@@ -121,7 +124,7 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
             <button
               type="button"
               onClick={toggleVisibility}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 dark:text-dark-400 hover:text-gray-600 dark:hover:text-dark-600"
               disabled={isSaving}
             >
               <Icon name={isVisible ? 'eye-slash' : 'eye'} size="sm" />
@@ -129,7 +132,7 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
           </div>
           
           {error && (
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm text-red-600 dark:text-error-400">{error}</p>
           )}
 
           <div className="flex items-center gap-2">
@@ -164,16 +167,16 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
           </div>
           
           {isSaving && (
-            <p className="text-sm text-gray-500 italic">Saving your API key...</p>
+            <p className="text-sm text-gray-500 dark:text-dark-500 italic">Saving your API key...</p>
           )}
         </div>
       ) : (
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-800 rounded-lg">
           <div className="flex items-center gap-3">
-            <Icon name="key" size="sm" className="text-gray-400" />
-            <span className="text-sm text-gray-600">API key configured</span>
+            <Icon name="key" size="sm" className="text-gray-400 dark:text-dark-400" />
+            <span className="text-sm text-gray-600 dark:text-dark-600">API key configured</span>
             {lastUsed && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 dark:text-dark-400">
                 Last used {new Date(lastUsed).toLocaleDateString()}
               </span>
             )}

@@ -3,6 +3,7 @@ import { BaseWorkflow, BaseWorkflowState } from './base-workflow';
 import { WorkflowConfig } from '../config/workflow.config';
 import { TranscriptAnalysisWorkflow } from './transcript-analysis.workflow';
 import { ContentGenerationWorkflow } from './content-generation.workflow';
+import { END } from '@langchain/langgraph';
 
 export interface MultiSourceState extends BaseWorkflowState {
   sources: Array<{
@@ -78,6 +79,7 @@ export class MultiSourceWorkflow extends BaseWorkflow<MultiSourceState> {
     
     this.graph.addEdge('analyzeSources', 'combineSources');
     this.graph.addEdge('combineSources', 'generateOutput');
+    this.graph.addEdge('generateOutput', END);
   }
   
   private async validateSources(state: MultiSourceState): Promise<MultiSourceState> {

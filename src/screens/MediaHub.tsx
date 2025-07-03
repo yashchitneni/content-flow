@@ -1,4 +1,4 @@
-// Task #5: Video Import Screen
+// Task #5: Media Hub - Video Import and Organization
 import React, { useState, useEffect } from 'react';
 import { VideoDropZone, VideoFile } from '../components/molecules/VideoDropZone';
 import { Button } from '../components/atoms/Button';
@@ -7,11 +7,15 @@ import { Badge } from '../components/atoms/Badge';
 import { Spinner } from '../components/atoms/Spinner';
 import { Tag } from '../components/atoms/Tag';
 import { invoke } from '@tauri-apps/api/core';
+import { useUsageStore } from '../store/usage.store';
+import { useAppStore } from '../store/app.store';
 
-export const VideoImport: React.FC = () => {
+export const MediaHub: React.FC = () => {
   const [importedVideos, setImportedVideos] = useState<VideoFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const updateStorageUsage = useUsageStore((state) => state.updateStorageUsage);
+  const transcripts = useAppStore((state) => state.transcripts);
 
   const loadImportedVideos = async () => {
     try {
@@ -21,6 +25,15 @@ export const VideoImport: React.FC = () => {
       
       const count = await invoke<number>('get_file_count');
       setTotalCount(count);
+      
+      // Update storage usage tracking
+      const totalSizeMB = videos.reduce((sum, video) => {
+        const sizeMB = video.metadata?.size ? video.metadata.size / (1024 * 1024) : 0;
+        return sum + sizeMB;
+      }, 0);
+      
+      // Update with current transcript count
+      updateStorageUsage(count, transcripts.length, totalSizeMB);
     } catch (error) {
       console.error('Failed to load videos:', error);
     } finally {

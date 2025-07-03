@@ -11,7 +11,7 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   fullWidth?: boolean
   icon?: ReactNode
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void
-  children: ReactNode
+  children?: ReactNode
   type?: 'button' | 'submit' | 'reset'
   className?: string
   'aria-label'?: string

@@ -45,6 +45,7 @@ pub struct TranscriptSummary {
     pub content_preview: String,
     pub imported_at: String,
     pub status: String,
+    pub content_score: Option<f64>, // Task #14
 }
 
 // Valid transcript file extensions
@@ -188,8 +189,9 @@ async fn import_single_transcript(
 pub async fn get_imported_transcripts(
     database: State<'_, Arc<Database>>,
 ) -> Result<Vec<TranscriptSummary>, String> {
-    let rows = sqlx::query_as::<_, (String, String, i64, String, String, String)>(
-        "SELECT t.TranscriptID, f.OriginalName, t.WordCount, t.Language, t.Content, t.ImportedAt FROM Transcript t JOIN File f ON t.FileID = f.FileID ORDER BY t.ImportedAt DESC"
+    // Task #14: Include ContentScore in query
+    let rows = sqlx::query_as::<_, (String, String, i64, String, String, String, Option<f64>)>(
+        "SELECT t.TranscriptID, f.OriginalName, t.WordCount, t.Language, t.Content, t.ImportedAt, t.ContentScore FROM Transcript t JOIN File f ON t.FileID = f.FileID ORDER BY t.ImportedAt DESC"
     )
     .fetch_all(&database.pool)
     .await
@@ -197,7 +199,7 @@ pub async fn get_imported_transcripts(
     
     let transcripts = rows
         .into_iter()
-        .map(|(id, filename, word_count, language, content, imported_at)| {
+        .map(|(id, filename, word_count, language, content, imported_at, content_score)| {
             let content_preview = if content.len() > 200 {
                 format!("{}...", &content[..200])
             } else {
@@ -212,6 +214,7 @@ pub async fn get_imported_transcripts(
                 content_preview,
                 imported_at,
                 status: "imported".to_string(),
+                content_score, // Task #14
             }
         })
         .collect();
@@ -553,9 +556,9 @@ pub async fn search_transcripts(
 fn create_highlighted_snippet(
     content: &str,
     query: &str,
-    max_length: usize,
+    _max_length: usize,
 ) -> (String, Vec<(usize, usize)>) {
-    let content_lower = content.to_lowercase();
+    let _content_lower = content.to_lowercase();
     let query_lower = query.to_lowercase();
     let query_words: Vec<&str> = query_lower.split_whitespace().collect();
     

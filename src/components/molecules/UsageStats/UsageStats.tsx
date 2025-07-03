@@ -43,7 +43,7 @@ export const UsageStats: React.FC<UsageStatsProps> = ({ stats, lastUpdated }) =>
           return (
             <div
               key={index}
-              className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+              className="p-4 glass rounded-lg hover:shadow-md transition-shadow hover-lift"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -51,8 +51,8 @@ export const UsageStats: React.FC<UsageStatsProps> = ({ stats, lastUpdated }) =>
                     <Icon name={stat.icon} size="sm" className={`text-${stat.color}-600`} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">{stat.label}</h4>
-                    <p className="text-xs text-gray-500">
+                    <h4 className="text-sm font-medium text-theme-primary">{stat.label}</h4>
+                    <p className="text-xs text-theme-secondary">
                       {formatNumber(stat.current)} {stat.unit}
                       {stat.limit && ` / ${formatNumber(stat.limit)} ${stat.unit}`}
                     </p>
@@ -62,13 +62,13 @@ export const UsageStats: React.FC<UsageStatsProps> = ({ stats, lastUpdated }) =>
 
               {stat.limit && (
                 <div className="space-y-1">
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-theme-secondary/20 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 ${progressColor}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 text-right">
+                  <p className="text-xs text-theme-secondary text-right">
                     {percentage.toFixed(1)}% used
                   </p>
                 </div>
@@ -79,7 +79,7 @@ export const UsageStats: React.FC<UsageStatsProps> = ({ stats, lastUpdated }) =>
       </div>
 
       {lastUpdated && (
-        <p className="text-xs text-gray-400 text-center">
+        <p className="text-xs text-theme-tertiary text-center">
           Last updated: {new Date(lastUpdated).toLocaleString()}
         </p>
       )}

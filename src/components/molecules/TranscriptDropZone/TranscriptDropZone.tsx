@@ -60,6 +60,15 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
     fileInputRef.current?.click();
   };
 
+  const handleDropZoneClick = (e: React.MouseEvent) => {
+    // Only trigger if clicking on the drop zone itself, not child elements like the button
+    if (e.target === e.currentTarget || e.currentTarget.contains(e.target as Node)) {
+      if (!disabled && !isImporting) {
+        fileInputRef.current?.click();
+      }
+    }
+  };
+
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const transcriptFiles = files.filter(file => 
@@ -135,10 +144,10 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
   `;
 
   const stateClasses = disabled || isImporting
-    ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
+    ? 'border-gray-300 dark:border-dark-300 bg-gray-50 dark:bg-dark-800 cursor-not-allowed'
     : isDragOver
-    ? 'border-primary-500 bg-primary-100 transform scale-105'
-    : 'border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-100';
+    ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20 transform scale-105'
+    : 'border-gray-300 dark:border-dark-200 bg-white dark:bg-dark-800 hover:border-primary-400 hover:bg-primary-100 dark:hover:bg-dark-700';
 
   return (
     <div className={`${className}`}>
@@ -147,6 +156,7 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={handleDropZoneClick}
       >
         <input
           ref={fileInputRef}
@@ -161,18 +171,18 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
           <Icon 
             name="file-text" 
             className={`w-12 h-12 ${
-              isDragOver ? 'text-primary-600' : 'text-gray-400'
+              isDragOver ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-dark-400'
             }`}
           />
           
           <div className="space-y-2">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               {isDragOver ? 'Drop your transcript files here' : 'Import Transcript Files'}
             </h3>
-            <p className="text-sm text-gray-600">
-              Drop exported Descript transcripts, or click to browse
+            <p className="text-sm text-gray-600 dark:text-dark-600">
+              Drop exported Descript transcripts, or click anywhere to browse
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-dark-500">
               Supports: {acceptedFormats.join(', ')} • Max {maxFiles} files
             </p>
           </div>
@@ -190,8 +200,8 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
         </div>
 
         {(isProcessing || isImporting) && (
-          <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center space-y-4">
-            <Icon name="file-text" className="w-8 h-8 text-primary-500 animate-pulse" />
+          <div className="absolute inset-0 bg-white/90 dark:bg-dark-900/90 flex flex-col items-center justify-center space-y-4">
+            <Icon name="file-text" className="w-8 h-8 text-primary-500 dark:text-primary-400 animate-pulse" />
             <div className="w-full max-w-xs">
               <Progress 
                 value={progress} 
@@ -199,7 +209,7 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
                 variant="primary"
               />
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-dark-600">
               {isProcessing ? 'Processing transcripts...' : 'Importing transcripts...'}
             </p>
           </div>
@@ -207,14 +217,14 @@ export const TranscriptDropZone: React.FC<TranscriptDropZoneProps> = ({
       </div>
 
       {errors.length > 0 && (
-        <div className="mt-4 p-4 bg-error-50 border border-error-200 rounded-lg">
+        <div className="mt-4 p-4 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-500/30 rounded-lg">
           <div className="flex items-start space-x-3">
-            <Icon name="alert-circle" className="w-5 h-5 text-error-500 flex-shrink-0 mt-0.5" />
+            <Icon name="alert-circle" className="w-5 h-5 text-error-500 dark:text-error-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-error-800 mb-2">
+              <h4 className="text-sm font-medium text-error-800 dark:text-error-300 mb-2">
                 Import Errors
               </h4>
-              <ul className="text-sm text-error-700 space-y-1">
+              <ul className="text-sm text-error-700 dark:text-error-400 space-y-1">
                 {errors.map((error, index) => (
                   <li key={index}>• {error}</li>
                 ))}

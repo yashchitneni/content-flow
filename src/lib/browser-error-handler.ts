@@ -1,4 +1,4 @@
-import { getLogger } from './logger';
+import { getLogger } from './browser-logger';
 import { WorkflowConfig } from '../config/workflow.config';
 
 export class WorkflowError extends Error {
@@ -95,20 +95,20 @@ export function createErrorHandler(workflowName: string) {
   };
 }
 
-export function gracefulShutdown(reason: string): void {
-  getLogger().info(`Graceful shutdown initiated: ${reason}`);
-  
-  // Add any cleanup logic here
-  process.exit(0);
-}
-
-process.on('SIGINT', () => gracefulShutdown('SIGINT received'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM received'));
-process.on('uncaughtException', (error) => {
-  getLogger().error('Uncaught exception', { error: error.message, stack: error.stack });
-  gracefulShutdown('Uncaught exception');
+// Browser-compatible error handling
+window.addEventListener('error', (event) => {
+  getLogger().error('Uncaught error', { 
+    error: event.error?.message || event.message, 
+    stack: event.error?.stack,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno
+  });
 });
-process.on('unhandledRejection', (reason, promise) => {
-  getLogger().error('Unhandled rejection', { reason, promise });
-  gracefulShutdown('Unhandled rejection');
+
+window.addEventListener('unhandledrejection', (event) => {
+  getLogger().error('Unhandled promise rejection', { 
+    reason: event.reason,
+    promise: event.promise
+  });
 });

@@ -3,7 +3,8 @@ import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { BaseWorkflow, BaseWorkflowState } from './base-workflow';
 import { WorkflowConfig } from '../config/workflow.config';
-import { RetryableError } from '../lib/error-handler';
+import { RetryableError } from '../lib/browser-error-handler';
+import { END } from '@langchain/langgraph';
 
 export interface ContentGenerationState extends BaseWorkflowState {
   transcripts: Array<{
@@ -29,7 +30,8 @@ export interface ContentGenerationState extends BaseWorkflowState {
 }
 
 export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationState> {
-  private model: ChatOpenAI | ChatAnthropic;
+  private model: ChatOpenAI | ChatAnthropic | null = null;
+  private config: WorkflowConfig;
   
   constructor(config: WorkflowConfig) {
     super('ContentGeneration', config, {
@@ -53,20 +55,44 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
       },
     });
     
-    if (config.aiProvider === 'openai') {
-      this.model = new ChatOpenAI({
-        modelName: config.models.generation,
-        temperature: config.temperature.generation,
-        maxTokens: config.maxTokens.generation,
-        openAIApiKey: config.apiKeys.openai,
+    this.config = config;
+    // Don't initialize the model in constructor - do it lazily when needed
+  }
+
+  private initializeModel(): void {
+    if (this.model) return; // Already initialized
+
+    try {
+      if (this.config.aiProvider === 'openai') {
+        if (!this.config.apiKeys.openai) {
+          throw new Error('OpenAI API key is required for content generation. Please add it in Settings.');
+        }
+        this.model = new ChatOpenAI({
+          modelName: this.config.models.generation,
+          temperature: this.config.temperature.generation,
+          maxTokens: this.config.maxTokens.generation,
+          openAIApiKey: this.config.apiKeys.openai,
+        });
+      } else {
+        if (!this.config.apiKeys.anthropic) {
+          throw new Error('Anthropic API key is required for content generation. Please add it in Settings.');
+        }
+        this.model = new ChatAnthropic({
+          modelName: this.config.models.generation,
+          temperature: this.config.temperature.generation,
+          maxTokens: this.config.maxTokens.generation,
+          anthropicApiKey: this.config.apiKeys.anthropic,
+        });
+      }
+    } catch (error) {
+      console.error('[ContentGeneration] Model initialization error:', error);
+      console.error('[ContentGeneration] Config state:', {
+        provider: this.config.aiProvider,
+        hasOpenAIKey: !!this.config.apiKeys.openai,
+        hasAnthropicKey: !!this.config.apiKeys.anthropic,
+        keyLength: this.config.apiKeys.openai?.length
       });
-    } else {
-      this.model = new ChatAnthropic({
-        modelName: config.models.generation,
-        temperature: config.temperature.generation,
-        maxTokens: config.maxTokens.generation,
-        anthropicApiKey: config.apiKeys.anthropic,
-      });
+      throw new Error(`Failed to initialize AI model: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
@@ -83,15 +109,25 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     this.graph.addEdge('prepareContext', 'generateContent');
     this.graph.addEdge('generateContent', 'formatContent');
     this.graph.addEdge('formatContent', 'validateOutput');
+    this.graph.addEdge('validateOutput', END);
   }
   
   private async validateInput(state: ContentGenerationState): Promise<ContentGenerationState> {
+    console.log('[ContentGeneration] validateInput called with state:', {
+      hasTranscripts: !!state.transcripts,
+      transcriptCount: state.transcripts?.length,
+      firstTranscript: state.transcripts?.[0],
+      hasTemplate: !!state.template,
+      templateType: state.template?.type,
+    });
+    
     this.logStep('validateInput', { 
       transcriptCount: state.transcripts?.length,
       templateType: state.template?.type,
     });
     
     if (!state.transcripts || state.transcripts.length === 0) {
+      console.error('[ContentGeneration] No transcripts provided!');
       return this.handleStepError(
         new Error('No transcripts provided'),
         'validateInput',
@@ -100,6 +136,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     }
     
     if (!state.template || !state.template.type) {
+      console.error('[ContentGeneration] No template type specified!');
       return this.handleStepError(
         new Error('No template type specified'),
         'validateInput',
@@ -107,6 +144,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
       );
     }
     
+    console.log('[ContentGeneration] validateInput passed');
     return state;
   }
   
@@ -164,22 +202,92 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
   
   private async generateContent(state: ContentGenerationState): Promise<ContentGenerationState> {
     this.logStep('generateContent');
+    console.log('[ContentGeneration] Starting content generation with state:', {
+      transcripts: state.transcripts.length,
+      template: state.template.type,
+      hasApiKey: !!this.config.apiKeys.openai,
+      transcriptSample: state.transcripts[0]?.content?.substring(0, 100) + '...'
+    });
     
     try {
+      // Initialize model only when needed
+      this.initializeModel();
+      if (!this.model) {
+        throw new Error('AI model not initialized. Please check your API keys in Settings.');
+      }
+
       const constraints = state.metadata?.context?.templateConstraints || {};
-      const transcriptSummaries = state.transcripts
-        .map(t => t.analysis?.summary || 'No summary available')
-        .join('\n\n');
+      // Use actual transcript content instead of summaries
+      const transcriptContent = state.transcripts
+        .map(t => {
+          // If we have analysis with summary, use it, otherwise use the raw content
+          if (t.analysis?.summary) {
+            return `Summary: ${t.analysis.summary}`;
+          }
+          // For raw content, truncate if too long to avoid token limits
+          const content = t.content || '';
+          const maxLength = 2000; // Reasonable length for context
+          if (content.length > maxLength) {
+            return `Transcript (truncated): ${content.substring(0, maxLength)}...`;
+          }
+          return `Transcript: ${content}`;
+        })
+        .join('\n\n---\n\n');
       
-      const prompt = this.buildGenerationPrompt(state.template.type, transcriptSummaries, constraints);
+      const prompt = this.buildGenerationPrompt(state.template.type, transcriptContent, constraints);
+      console.log('[ContentGeneration] Built prompt:', {
+        promptLength: prompt.length,
+        promptPreview: prompt.substring(0, 500) + '...',
+        fullPrompt: prompt // This will show in debug panel
+      });
       
       const response = await this.executeWithRetry(async () => {
-        const result = await this.model.invoke([new HumanMessage(prompt)]);
+        console.log('[ContentGeneration] Invoking AI model with prompt length:', prompt.length);
+        const result = await this.model!.invoke([new HumanMessage(prompt)]);
+        
+        console.log('[ContentGeneration] AI model response received:', {
+          hasContent: !!result.content,
+          contentType: typeof result.content,
+          contentLength: result.content?.toString().length,
+          contentSample: result.content?.toString().substring(0, 200)
+        });
+        
+        // Track token usage (estimate based on response length)
+        // Note: In production, you'd use the actual token count from the API response
+        const estimatedTokens = Math.ceil(prompt.length / 4) + Math.ceil(result.content.toString().length / 4);
+        
+        // Import and use the usage store
+        if (typeof window !== 'undefined') {
+          import('../store/usage.store').then(({ useUsageStore }) => {
+            const trackUsage = this.config.aiProvider === 'openai' 
+              ? useUsageStore.getState().trackOpenAIUsage 
+              : useUsageStore.getState().trackClaudeUsage;
+            trackUsage(estimatedTokens);
+          });
+        }
         
         try {
           const content = result.content.toString();
-          return JSON.parse(content);
+          console.log('[ContentGeneration] Attempting to parse JSON response:', content.substring(0, 500));
+          
+          // Clean the response - remove markdown code blocks if present
+          const cleanedContent = content
+            .replace(/^```json\s*\n?/i, '') // Remove opening ```json
+            .replace(/\n?```\s*$/i, '')      // Remove closing ```
+            .trim();
+          
+          console.log('[ContentGeneration] Cleaned content for parsing:', cleanedContent.substring(0, 500));
+          
+          const parsed = JSON.parse(cleanedContent);
+          console.log('[ContentGeneration] Successfully parsed response:', {
+            hasTitle: !!parsed.title,
+            hasContent: !!parsed.content,
+            contentType: Array.isArray(parsed.content) ? 'array' : typeof parsed.content
+          });
+          return parsed;
         } catch (parseError) {
+          console.error('[ContentGeneration] Failed to parse AI response as JSON:', parseError);
+          console.error('[ContentGeneration] Raw content that failed to parse:', result.content.toString());
           throw new RetryableError(
             'Failed to parse generated content',
             this.name,
@@ -208,63 +316,63 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     }
   }
   
-  private buildGenerationPrompt(type: string, summaries: string, constraints: Record<string, any>): string {
+  private buildGenerationPrompt(type: string, transcriptContent: string, constraints: Record<string, any>): string {
     const prompts: Record<string, string> = {
-      thread: `Create a Twitter/X thread based on these transcript summaries. 
+      thread: `Create a Twitter/X thread based on the following transcript content. Extract the key insights and transform them into an engaging thread.
 Constraints: ${JSON.stringify(constraints)}
 
-Summaries:
-${summaries}
+Transcript Content:
+${transcriptContent}
 
-Generate a JSON response with:
+Return ONLY a JSON object (no markdown formatting, no code blocks) with this structure:
 {
   "title": "Thread title/hook",
   "content": ["Tweet 1", "Tweet 2", ...]
 }`,
       
-      carousel: `Create an Instagram carousel post based on these transcript summaries.
+      carousel: `Create an Instagram carousel post based on the following transcript content. Transform the key points into visually engaging slides.
 Constraints: ${JSON.stringify(constraints)}
 
-Summaries:
-${summaries}
+Transcript Content:
+${transcriptContent}
 
-Generate a JSON response with:
+Return ONLY a JSON object (no markdown formatting, no code blocks) with this structure:
 {
   "title": "Carousel caption",
   "content": ["Slide 1 text", "Slide 2 text", ...]
 }`,
       
-      newsletter: `Create a newsletter section based on these transcript summaries.
+      newsletter: `Create a newsletter section based on the following transcript content. Extract and organize the main insights.
 Constraints: ${JSON.stringify(constraints)}
 
-Summaries:
-${summaries}
+Transcript Content:
+${transcriptContent}
 
-Generate a JSON response with:
+Return ONLY a JSON object (no markdown formatting, no code blocks) with this structure:
 {
   "title": "Newsletter section title",
   "content": "Full newsletter content with proper formatting"
 }`,
       
-      blog: `Create a blog post based on these transcript summaries.
+      blog: `Create a blog post based on the following transcript content. Expand on the key themes and insights.
 Constraints: ${JSON.stringify(constraints)}
 
-Summaries:
-${summaries}
+Transcript Content:
+${transcriptContent}
 
-Generate a JSON response with:
+Return ONLY a JSON object (no markdown formatting, no code blocks) with this structure:
 {
   "title": "Blog post title",
   "content": "Full blog post content with headings and paragraphs"
 }`,
       
-      'video-script': `Create a video script based on these transcript summaries.
+      'video-script': `Create a video script based on the following transcript content. Structure it for engaging video delivery.
 Constraints: ${JSON.stringify(constraints)}
 
-Summaries:
-${summaries}
+Transcript Content:
+${transcriptContent}
 
-Generate a JSON response with:
+Return ONLY a JSON object (no markdown formatting, no code blocks) with this structure:
 {
   "title": "Video title",
   "content": "Full video script with sections and timing cues"

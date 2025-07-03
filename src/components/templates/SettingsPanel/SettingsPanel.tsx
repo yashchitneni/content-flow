@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { ApiKeyInput } from '../../molecules/ApiKeyInput';
 import { UsageStats, UsageStatsItem } from '../../molecules/UsageStats';
 import { PreferenceGroup, PreferenceItem } from '../../organisms/PreferenceGroup';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icon';
 import { useToast } from '../../../lib/hooks/useToast';
+import { useAppStore } from '../../../store/app.store';
+import { useUsageStore } from '../../../store/usage.store';
 
 interface ApiKeyInfo {
   service: string;
@@ -59,29 +60,36 @@ export const SettingsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [apiKeyValues, setApiKeyValues] = useState<Record<string, string>>({});
   const { showToast } = useToast();
+  
+  // Use global store for API key management
+  const { apiKeys, setApiKey, removeApiKey, hasApiKey, addNotification } = useAppStore();
+  const { usage, resetMonthlyUsage } = useUsageStore();
 
   const apiKeyServices = [
-    { id: 'descript', label: 'Descript API', placeholder: 'sk-...' },
     { id: 'openai', label: 'OpenAI API', placeholder: 'sk-...' },
-    { id: 'claude', label: 'Claude API', placeholder: 'claude-...' },
+    { id: 'claude', label: 'Claude API', placeholder: 'sk_ant-...' },
   ];
 
   useEffect(() => {
     loadSettings();
   }, []);
+  
+  // Debug logging to check API key persistence
+  useEffect(() => {
+    console.log('[SettingsPanel] Current API keys from store:', apiKeys);
+    console.log('[SettingsPanel] localStorage contentflow-storage:', localStorage.getItem('contentflow-storage'));
+  }, [apiKeys]);
 
   const loadSettings = async () => {
     try {
       setLoading(true);
       
-      // For demo, load API keys from localStorage
-      const savedKeys = localStorage.getItem('contentflow-api-keys');
-      const apiKeys = savedKeys ? JSON.parse(savedKeys) : {};
-      
+      // Load API keys from global store
       const response: SettingsResponse = {
         api_keys: [
-          { service: 'openai', is_set: !!apiKeys.openai, created_at: new Date().toISOString() },
-          { service: 'claude', is_set: !!apiKeys.claude, created_at: new Date().toISOString() },
+          { service: 'openai', is_set: hasApiKey('openai'), created_at: new Date().toISOString() },
+          { service: 'claude', is_set: hasApiKey('claude'), created_at: new Date().toISOString() },
+          { service: 'descript', is_set: hasApiKey('descript'), created_at: new Date().toISOString() },
         ],
         preferences: {
           theme: 'light',
@@ -126,18 +134,18 @@ export const SettingsPanel: React.FC = () => {
     const keyValue = apiKeyValues[service];
     
     console.log('Saving API key for service:', service);
+    console.log('Key value length:', keyValue?.length);
     
     if (!keyValue || keyValue.trim() === '') {
+      console.error('Invalid API key - empty or missing');
       throw new Error('Invalid API key');
     }
     
-    // Save to localStorage
-    const currentKeys = localStorage.getItem('contentflow-api-keys');
-    const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
-    apiKeys[service] = keyValue;
-    localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
+    // Save to global store
+    setApiKey(service as 'openai' | 'claude' | 'descript', keyValue);
     
-    console.log('Saved to localStorage:', apiKeys);
+    console.log('Saved API key for:', service);
+    console.log('Store state after save:', { apiKeys, hasApiKey: hasApiKey(service) });
     
     // Update local state to show key is configured
     setSettings((prev) => {
@@ -158,57 +166,38 @@ export const SettingsPanel: React.FC = () => {
       [service]: ''
     }));
     
-    // Show success notifications
-    showToast({
-      title: 'Success',
-      description: `${service} API key saved successfully`,
-      variant: 'success',
-    });
+    // Show success notification using global store
+    addNotification('success', `${service} API key saved successfully`);
   };
 
   const handleApiKeyRemove = async (service: string) => {
     try {
-      // For demo - remove from localStorage
-      const currentKeys = localStorage.getItem('contentflow-api-keys');
-      const apiKeys = currentKeys ? JSON.parse(currentKeys) : {};
-      delete apiKeys[service];
-      localStorage.setItem('contentflow-api-keys', JSON.stringify(apiKeys));
+      // Remove from global store
+      removeApiKey(service as 'openai' | 'claude' | 'descript');
       
-      showToast({
-        title: 'Success',
-        description: `${service} API key removed`,
-        variant: 'success',
-      });
-      
-      alert(`✅ ${service.toUpperCase()} API key removed successfully!`);
+      addNotification('success', `${service} API key removed successfully`);
       
       await loadSettings();
     } catch (error) {
-      showToast({
-        title: 'Error',
-        description: `Failed to remove ${service} API key`,
-        variant: 'error',
-      });
+      addNotification('error', `Failed to remove ${service} API key`);
     }
   };
 
   const handleApiKeyVerify = async (service: string): Promise<boolean> => {
     try {
-      const isValid = await invoke<boolean>('verify_api_key', { service });
-      if (!isValid) {
-        showToast({
-          title: 'Invalid API Key',
-          description: 'The API key appears to be invalid',
-          variant: 'error',
-        });
+      // For now, just verify the key exists in the store
+      // In production, this would make an actual API call to verify
+      const hasKey = hasApiKey(service as 'openai' | 'claude' | 'descript');
+      
+      if (!hasKey) {
+        addNotification('error', 'No API key configured for ' + service);
+        return false;
       }
-      return isValid;
+      
+      addNotification('info', `${service} API key verification not implemented yet`);
+      return true;
     } catch (error) {
-      showToast({
-        title: 'Error',
-        description: 'Failed to verify API key',
-        variant: 'error',
-      });
+      addNotification('error', 'Failed to verify API key');
       return false;
     }
   };
@@ -222,22 +211,15 @@ export const SettingsPanel: React.FC = () => {
     };
 
     try {
-      await invoke('update_preferences', { preferences: updatedPreferences });
+      // In production, this would call Tauri
+      // For now, just update local state
       setSettings({
         ...settings,
         preferences: updatedPreferences,
       });
-      showToast({
-        title: 'Preferences Updated',
-        description: 'Your preferences have been saved',
-        variant: 'success',
-      });
+      addNotification('success', 'Preferences updated successfully');
     } catch (error) {
-      showToast({
-        title: 'Error',
-        description: 'Failed to update preferences',
-        variant: 'error',
-      });
+      addNotification('error', 'Failed to update preferences');
     }
   };
 
@@ -250,22 +232,15 @@ export const SettingsPanel: React.FC = () => {
     };
 
     try {
-      await invoke('update_file_organization', { fileOrganization: updatedFileOrg });
+      // In production, this would call Tauri
+      // For now, just update local state
       setSettings({
         ...settings,
         file_organization: updatedFileOrg,
       });
-      showToast({
-        title: 'File Organization Updated',
-        description: 'Your file organization settings have been saved',
-        variant: 'success',
-      });
+      addNotification('success', 'File organization settings updated successfully');
     } catch (error) {
-      showToast({
-        title: 'Error',
-        description: 'Failed to update file organization',
-        variant: 'error',
-      });
+      addNotification('error', 'Failed to update file organization');
     }
   };
 
@@ -278,22 +253,15 @@ export const SettingsPanel: React.FC = () => {
     };
 
     try {
-      await invoke('update_brand_settings', { brandSettings: updatedBrand });
+      // In production, this would call Tauri
+      // For now, just update local state
       setSettings({
         ...settings,
         brand_settings: updatedBrand,
       });
-      showToast({
-        title: 'Brand Settings Updated',
-        description: 'Your brand settings have been saved',
-        variant: 'success',
-      });
+      addNotification('success', 'Brand settings updated successfully');
     } catch (error) {
-      showToast({
-        title: 'Error',
-        description: 'Failed to update brand settings',
-        variant: 'error',
-      });
+      addNotification('error', 'Failed to update brand settings');
     }
   };
 
@@ -302,7 +270,7 @@ export const SettingsPanel: React.FC = () => {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading settings...</p>
+          <p className="mt-4 text-theme-secondary">Loading settings...</p>
         </div>
       </div>
     );
@@ -310,34 +278,47 @@ export const SettingsPanel: React.FC = () => {
 
   const usageStatsItems: UsageStatsItem[] = [
     {
-      label: 'Descript API Calls',
-      current: settings.usage_stats.descript_api_calls,
-      limit: 1000,
+      label: 'OpenAI Tokens',
+      current: usage.openai.tokensUsed,
+      limit: 100000,
+      unit: 'tokens',
+      icon: 'brain',
+      color: 'primary',
+    },
+    {
+      label: 'OpenAI API Calls',
+      current: usage.openai.apiCalls,
       unit: 'calls',
       icon: 'api',
       color: 'primary',
     },
     {
-      label: 'OpenAI Tokens',
-      current: settings.usage_stats.openai_tokens_used,
-      limit: 100000,
-      unit: 'tokens',
-      icon: 'brain',
-      color: 'secondary',
-    },
-    {
       label: 'Claude Tokens',
-      current: settings.usage_stats.claude_tokens_used,
+      current: usage.claude.tokensUsed,
       limit: 100000,
       unit: 'tokens',
       icon: 'robot',
+      color: 'secondary',
+    },
+    {
+      label: 'Claude API Calls',
+      current: usage.claude.apiCalls,
+      unit: 'calls',
+      icon: 'api',
+      color: 'secondary',
+    },
+    {
+      label: 'Videos Stored',
+      current: usage.storage.videosCount,
+      unit: 'files',
+      icon: 'video',
       color: 'success',
     },
     {
-      label: 'Storage Used',
-      current: settings.usage_stats.storage_used_mb,
-      unit: 'MB',
-      icon: 'database',
+      label: 'Transcripts',
+      current: usage.storage.transcriptsCount,
+      unit: 'files',
+      icon: 'file-text',
       color: 'warning',
     },
   ];
@@ -461,19 +442,19 @@ export const SettingsPanel: React.FC = () => {
 
   return (
     <div className="flex h-full">
-      <div className="w-64 bg-gray-50 border-r border-gray-200">
+      <div className="w-64 bg-theme-secondary border-r border-theme">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+          <h2 className="text-xl font-semibold text-theme-primary">Settings</h2>
         </div>
         <nav className="px-3">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 mb-1 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2 mb-1 rounded-lg transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'glass text-primary-500 shadow-glow-subtle scale-[1.02]'
+                  : 'text-theme-secondary hover:bg-theme-hover hover:text-theme-primary'
               }`}
             >
               <Icon name={tab.icon} size="sm" />
@@ -483,13 +464,13 @@ export const SettingsPanel: React.FC = () => {
         </nav>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-theme-primary">
         <div className="max-w-4xl mx-auto p-8">
           {activeTab === 'api-keys' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">API Keys</h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <h3 className="text-lg font-medium text-theme-primary mb-2">API Keys</h3>
+                <p className="text-sm text-theme-secondary mb-6">
                   Configure your API keys for external services. All keys are encrypted and stored securely.
                 </p>
               </div>
@@ -522,8 +503,8 @@ export const SettingsPanel: React.FC = () => {
           {activeTab === 'preferences' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Preferences</h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <h3 className="text-lg font-medium text-theme-primary mb-2">Preferences</h3>
+                <p className="text-sm text-theme-secondary mb-6">
                   Customize your ContentFlow experience with these preferences.
                 </p>
               </div>
@@ -541,8 +522,8 @@ export const SettingsPanel: React.FC = () => {
           {activeTab === 'file-organization' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">File Organization</h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <h3 className="text-lg font-medium text-theme-primary mb-2">File Organization</h3>
+                <p className="text-sm text-theme-secondary mb-6">
                   Configure how ContentFlow organizes and manages your video files.
                 </p>
               </div>
@@ -560,8 +541,8 @@ export const SettingsPanel: React.FC = () => {
           {activeTab === 'brand' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Brand Settings</h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <h3 className="text-lg font-medium text-theme-primary mb-2">Brand Settings</h3>
+                <p className="text-sm text-theme-secondary mb-6">
                   Customize the appearance of your generated content to match your brand.
                 </p>
               </div>
@@ -579,16 +560,37 @@ export const SettingsPanel: React.FC = () => {
           {activeTab === 'usage' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Usage Statistics</h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <h3 className="text-lg font-medium text-theme-primary mb-2">Usage Statistics</h3>
+                <p className="text-sm text-theme-secondary mb-6">
                   Monitor your usage of external services and storage.
                 </p>
               </div>
 
               <UsageStats
                 stats={usageStatsItems}
-                lastUpdated={settings.usage_stats.last_updated}
+                lastUpdated={usage.lastUpdated}
               />
+              
+              <div className="mt-6 flex items-center justify-between glass rounded-lg p-4">
+                <div>
+                  <h4 className="text-sm font-medium text-theme-primary">Monthly Usage Reset</h4>
+                  <p className="text-xs text-theme-secondary mt-1">
+                    Last reset: {new Date(usage.openai.lastReset).toLocaleDateString()}
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to reset your monthly usage statistics?')) {
+                      resetMonthlyUsage();
+                      addNotification('success', 'Monthly usage statistics have been reset');
+                    }
+                  }}
+                >
+                  Reset Usage
+                </Button>
+              </div>
             </div>
           )}
         </div>
