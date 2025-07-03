@@ -19,6 +19,7 @@ export const Badge: React.FC<BadgeProps> = ({
     inline-flex items-center justify-center
     font-medium rounded-full
     transition-colors duration-200
+    ${onClick ? 'cursor-pointer' : ''}
   `
 
   const sizeClasses = {
@@ -40,7 +41,6 @@ export const Badge: React.FC<BadgeProps> = ({
     <span 
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
       onClick={onClick}
-      style={onClick ? { cursor: 'pointer' } : undefined}
     >
       {children}
     </span>

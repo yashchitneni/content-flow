@@ -9,32 +9,32 @@ const statusConfig = {
   queued: { 
     label: 'Queued', 
     variant: 'secondary' as const,
-    icon: 'Clock' as const
+    icon: 'refresh' as const
   },
   uploading: { 
     label: 'Uploading', 
     variant: 'primary' as const,
-    icon: 'Upload' as const
+    icon: 'upload' as const
   },
   processing: { 
     label: 'Processing', 
     variant: 'primary' as const,
-    icon: 'Loader' as const
+    icon: 'refresh' as const
   },
   completed: { 
     label: 'Completed', 
     variant: 'success' as const,
-    icon: 'CheckCircle' as const
+    icon: 'check-circle' as const
   },
   failed: { 
     label: 'Failed', 
     variant: 'error' as const,
-    icon: 'XCircle' as const
+    icon: 'x-circle' as const
   },
   manual_export_required: { 
     label: 'Manual Export Required', 
     variant: 'warning' as const,
-    icon: 'AlertCircle' as const
+    icon: 'alert-circle' as const
   }
 };
 
@@ -119,12 +119,14 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
             <span>Progress</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div 
+            className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+            style={{'--progress-width': `${progress}%`} as React.CSSProperties}
+          >
             <div 
-              className={`h-full transition-all duration-300 ease-out ${
+              className={`h-full transition-all duration-300 ease-out w-[var(--progress-width)] ${
                 status === 'failed' ? 'bg-red-500' : 'bg-blue-500'
               }`}
-              style={{ width: `${progress}%` }}
             />
           </div>
         </div>

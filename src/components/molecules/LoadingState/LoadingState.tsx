@@ -1,6 +1,5 @@
 import React from 'react';
 import { Spinner } from '../../atoms/Spinner';
-import { colors, spacing } from '../../../tokens';
 
 interface LoadingStateProps {
   message?: string;
@@ -15,27 +14,24 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   fullScreen = false,
   inline = false
 }) => {
-  const containerStyles: React.CSSProperties = {
-    display: inline ? 'inline-flex' : 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing[3],
-    padding: inline ? 0 : spacing[8],
-    minHeight: fullScreen ? '100vh' : 'auto',
-    width: inline ? 'auto' : '100%'
-  };
+  const containerClasses = [
+    inline ? 'inline-flex' : 'flex',
+    'flex-col items-center justify-center gap-3',
+    inline ? '' : 'p-8',
+    fullScreen ? 'min-h-screen' : 'min-h-0',
+    inline ? 'w-auto' : 'w-full'
+  ].join(' ');
 
-  const messageStyles: React.CSSProperties = {
-    fontSize: size === 'sm' ? '14px' : size === 'md' ? '16px' : '18px',
-    color: colors.gray[600],
-    margin: 0
+  const messageSizeClasses = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
   };
 
   return (
-    <div style={containerStyles} role="status" aria-live="polite">
+    <div className={containerClasses} role="status" aria-live="polite">
       <Spinner size={size} />
-      {message && <p style={messageStyles}>{message}</p>}
+      {message && <p className={`${messageSizeClasses[size]} text-gray-600 m-0`}>{message}</p>}
     </div>
   );
 };

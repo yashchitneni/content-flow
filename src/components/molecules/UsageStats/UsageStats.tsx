@@ -48,7 +48,7 @@ export const UsageStats: React.FC<UsageStatsProps> = ({ stats, lastUpdated }) =>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className={`p-2 rounded-lg bg-${stat.color}-50`}>
-                    <Icon name={stat.icon} size="sm" className={`text-${stat.color}-600`} />
+                    <Icon name={stat.icon as any} size="sm" className={`text-${stat.color}-600`} />
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-theme-primary">{stat.label}</h4>
@@ -62,10 +62,12 @@ export const UsageStats: React.FC<UsageStatsProps> = ({ stats, lastUpdated }) =>
 
               {stat.limit && (
                 <div className="space-y-1">
-                  <div className="w-full bg-theme-secondary/20 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="w-full bg-theme-secondary/20 rounded-full h-2 overflow-hidden"
+                    style={{'--progress-width': `${percentage}%`} as React.CSSProperties}
+                  >
                     <div
-                      className={`h-full transition-all duration-300 ${progressColor}`}
-                      style={{ width: `${percentage}%` }}
+                      className={`h-full transition-all duration-300 w-[var(--progress-width)] ${progressColor}`}
                     />
                   </div>
                   <p className="text-xs text-theme-secondary text-right">

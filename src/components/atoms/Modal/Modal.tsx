@@ -55,11 +55,11 @@ export const Modal: React.FC<ModalProps> = ({
         {/* Modal */}
         <div 
           ref={modalRef}
-          className={`relative bg-white dark:bg-dark-800 rounded-lg shadow-xl transform transition-all w-full ${sizeClasses[size]} ${className}`}
+          className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all w-full ${sizeClasses[size]} ${className}`}
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-700">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               {title && (
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {title}
@@ -68,7 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500 dark:text-dark-400 dark:hover:text-dark-300 transition-colors"
+                  className="text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
                 >
                   <Icon name="x" size="sm" />
                 </button>

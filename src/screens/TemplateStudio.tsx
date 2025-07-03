@@ -3,7 +3,7 @@ import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
 import { Badge } from '../components/atoms/Badge';
 import { Modal } from '../components/atoms/Modal';
-import { useAppStore } from '../store/app.store';
+import { useUIStore } from '../store/ui.store';
 import { invoke } from '../lib/tauri-wrapper';
 
 interface Template {
@@ -27,7 +27,7 @@ interface TemplateFormData {
 }
 
 export const TemplateStudio: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useUIStore();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);

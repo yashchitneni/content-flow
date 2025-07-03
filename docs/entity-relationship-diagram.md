@@ -82,94 +82,99 @@ Many Tags can be associated with many Transcripts
 
 
 4. Complete ERD
-┌─────────────────┐          ┌─────────────────┐
-│     Folder      │          │ DescriptProject │
-├─────────────────┤          ├─────────────────┤
-│ FolderID (PK)   │          │ ProjectID (PK)  │
-│ Path            │          │ ProjectName     │
-│ FolderType      │          │ DescriptID      │
-│ CreatedAt       │          │ FileCount       │
-└───────┬─────────┘          │ CreatedAt       │
-        │                    │ UploadedAt      │
-        │1                   │ Status          │
-        │                    └────────┬────────┘
-        │                             │1
-        ▼N                            ▼N
-┌─────────────────┐          ┌─────────────────┐
-│      File       │◀─────────│  ProjectFiles   │
-├─────────────────┤     N    ├─────────────────┤
-│ FileID (PK)     │          │ ProjectID (FK)  │
-│ FolderID (FK)   │          │ FileID (FK)     │
-│ FilePath        │          └─────────────────┘
-│ OriginalName    │
-│ FileSize        │
-│ Duration        │                 1
-│ Width           │          ┌──────┴──────────┐
-│ Height          │          │   Transcript    │
-│ Orientation     │          ├─────────────────┤
-│ ContentType     │          │ TranscriptID(PK)│
-│ CreatedAt       │          │ FileID (FK)     │
-│ ImportedAt      │          │ Content         │
-│ Status          │          │ WordCount       │
-└─────────────────┘          │ Language        │
-                             │ ImportedAt      │
-                             │ AnalyzedAt      │
-                             │ ContentScore    │
-                             │ Summary         │
-                             └────────┬────────┘
-                                      │1
-                                      ▼N
-                             ┌─────────────────┐         ┌─────────────────┐
-                             │ TranscriptTags  │         │      Tag        │
-                             ├─────────────────┤         ├─────────────────┤
-                             │TranscriptID(FK) │◀────────│ TagID (PK)      │
-                             │ TagID (FK)      │    N    │ TagName         │
-                             │ Relevance       │         │ Category        │
-                             └─────────────────┘         └─────────────────┘
-
-        ┌─────────────────┐
-        │ ContentSources  │
-        ├─────────────────┤
-        │ ContentID (FK)  │
-        │TranscriptID(FK) │
-        │ OrderIndex      │
-        └────────┬────────┘
-                 │N
-                 ▼
-        ┌─────────────────┐         ┌─────────────────┐
-        │GeneratedContent │         │    Template     │
-        ├─────────────────┤         ├─────────────────┤
-        │ ContentID (PK)  │◀────────│ TemplateID (PK) │
-        │ TemplateID (FK) │    1    │ TemplateName    │
-        │ Title           │         │ TemplateType    │
-        │ ContentData     │         │ Structure       │
-        │ Status          │         │ Constraints     │
-        │ CreatedAt       │         │ CreatedAt       │
-        │ UpdatedAt       │         └─────────────────┘
-        └────────┬────────┘
-                 │1
-                 ▼N
-        ┌─────────────────┐         ┌─────────────────┐
-        │ ContentVersion  │         │  ExportHistory  │
-        ├─────────────────┤         ├─────────────────┤
-        │ VersionID (PK)  │         │ ExportID (PK)   │
-        │ ContentID (FK)  │◀────────│ ContentID (FK)  │
-        │ VersionNumber   │    1    │ ExportFormat    │
-        │ VersionData     │         │ ExportPath      │
-        │ ChangeSummary   │         │ ExportedAt      │
-        │ CreatedAt       │         │ Platform        │
-        └─────────────────┘         └─────────────────┘
-
-        ┌─────────────────┐
-        │     APIKey      │
-        ├─────────────────┤
-        │ KeyID (PK)      │
-        │ ServiceName     │
-        │ EncryptedKey    │
-        │ IsActive        │
-        │ LastUsed        │
-        │ CreatedAt       │
-        └─────────────────┘
+┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
+│     Folder      │          │ DescriptProject │          │  ProjectFiles   │
+├─────────────────┤          ├─────────────────┤          ├─────────────────┤
+│ FolderID (PK)   │          │ ProjectID (PK)  ├──<1--N>─┤ ProjectID (FK)  │
+│ Path            │          │ ProjectName     │          │ FileID (FK)     │
+│ FolderType      │          │ DescriptID      │          └───────┬─────────┘
+│ CreatedAt       │          │ FileCount       │                  │N
+└───────┬─────────┘          │ CreatedAt       │                  │
+        │                    │ UploadedAt      │                  ▼1
+        │1                   │ Status          │          ┌─────────────────┐
+        │                    └─────────────────┘          │      File       │
+        ▼N                                                 ├─────────────────┤
+┌─────────────────────────────────────────────────────────┤ FileID (PK)     │
+│                                                          │ FolderID (FK)   │◀┘
+│                                                          │ FilePath        │
+│                                                          │ OriginalName    │
+│                                                          │ FileSize        │
+│                                                          │ Duration        │
+│                                                          │ Width           │
+│                                                          │ Height          │
+│                                                          │ Orientation     │
+│                                                          │ ContentType     │
+│                                                          │ CreatedAt       │
+│                                                          │ ImportedAt      │
+│                                                          │ Status          │
+│                                                          └────────┬────────┘
+│                                                                   │1
+│                                                                   ▼0..1
+│                                                          ┌─────────────────┐
+│                                                          │   Transcript    │
+│                                                          ├─────────────────┤
+│                                                          │ TranscriptID(PK)│
+│                                                          │ FileID (FK)     │
+│                                                          │ Content         │
+│                                                          │ WordCount       │
+│                                                          │ Language        │
+│                                                          │ ImportedAt      │
+│                                                          │ AnalyzedAt      │
+│                                                          │ ContentScore    │
+│                                                          │ Summary         │
+│                                                          └────────┬────────┘
+│                                                                   │1
+│                                                                   ▼N
+│                             ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│                             │ TranscriptTags  │         │      Tag        │         │                 │
+│                             ├─────────────────┤         ├─────────────────┤         │                 │
+│                             │TranscriptID(FK) ├─N>------┤ TagID (PK)      │         │                 │
+│                             │ TagID (FK)      │         │ TagName         │         │                 │
+│                             │ Relevance       │         │ Category        │         │                 │
+│                             └─────────────────┘         └─────────────────┘         │                 │
+│                                                                                      │                 │
+│                             ┌─────────────────┐                                     │                 │
+│                             │ ContentSources  │                                     │                 │
+│                             ├─────────────────┤                                     │                 │
+│                             │ ContentID (FK)  ├─────────────────────────────────N>──┤                 │
+│                             │TranscriptID(FK) ├─N>──────────────────────────────────┘                 │
+│                             │ OrderIndex      │                                                        │
+│                             └─────────────────┘                                                        │
+│                                                                                                        │
+│        ┌─────────────────┐         ┌─────────────────┐                                               │
+│        │GeneratedContent │         │    Template     │                                               │
+│        ├─────────────────┤         ├─────────────────┤                                               │
+│        │ ContentID (PK)  ├─N>──────┤ TemplateID (PK) │                                               │
+│        │ TemplateID (FK) │         │ TemplateName    │                                               │
+│        │ Title           │         │ TemplateType    │                                               │
+│        │ ContentData     │         │ Structure       │                                               │
+│        │ Status          │         │ Constraints     │                                               │
+│        │ CreatedAt       │         │ CreatedAt       │                                               │
+│        │ UpdatedAt       │         └─────────────────┘                                               │
+│        └────────┬────────┘◀───────────────────────────────────────────────────────────────────────────┘
+│                 │1
+│                 ▼N
+│        ┌─────────────────┐         ┌─────────────────┐
+│        │ ContentVersion  │         │  ExportHistory  │
+│        ├─────────────────┤         ├─────────────────┤
+│        │ VersionID (PK)  │         │ ExportID (PK)   │
+│        │ ContentID (FK)  ├─1>──────┤ ContentID (FK)  │
+│        │ VersionNumber   │         │ ExportFormat    │
+│        │ VersionData     │         │ ExportPath      │
+│        │ ChangeSummary   │         │ ExportedAt      │
+│        │ CreatedAt       │         │ Platform        │
+│        └─────────────────┘         └─────────────────┘
+│
+│        ┌─────────────────┐
+│        │     APIKey      │
+│        ├─────────────────┤
+│        │ KeyID (PK)      │
+│        │ ServiceName     │
+│        │ EncryptedKey    │
+│        │ IsActive        │
+│        │ LastUsed        │
+│        │ CreatedAt       │
+└────────┴─────────────────┘
 5. Resolved Many-to-Many Relationships
 TranscriptTags (Junction Table)
 

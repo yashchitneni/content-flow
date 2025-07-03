@@ -6,7 +6,9 @@ import { PreferenceGroup, PreferenceItem } from '../../organisms/PreferenceGroup
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icon';
 import { useToast } from '../../../lib/hooks/useToast';
-import { useAppStore } from '../../../store/app.store';
+import { useApiKeyStore } from '../../../store/apiKey.store';
+import { useSettingsStore } from '../../../store/settings.store';
+import { useUIStore } from '../../../store/ui.store';
 import { useUsageStore } from '../../../store/usage.store';
 
 interface ApiKeyInfo {
@@ -63,12 +65,17 @@ export const SettingsPanel: React.FC = () => {
   const [availableTemplates, setAvailableTemplates] = useState<Array<{ template_id: string; template_name: string }>>([]);
   const { showToast } = useToast();
   
-  // Use global store for API key management
+  // Use domain-specific stores
   const { 
-    apiKeys, setApiKey, removeApiKey, hasApiKey, addNotification,
+    apiKeys, setApiKey, removeApiKey, hasApiKey
+  } = useApiKeyStore();
+  
+  const {
     isAutoGenerateEnabled, defaultAutomationTemplateId,
     setIsAutoGenerateEnabled, setDefaultAutomationTemplateId
-  } = useAppStore();
+  } = useSettingsStore();
+  
+  const { addNotification } = useUIStore();
   const { usage, resetMonthlyUsage } = useUsageStore();
 
   const apiKeyServices = [

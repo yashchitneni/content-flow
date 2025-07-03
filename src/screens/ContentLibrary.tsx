@@ -6,7 +6,7 @@ import { Spinner } from '../components/atoms/Spinner';
 import { EmptyState } from '../components/molecules/EmptyState';
 import { Modal } from '../components/atoms/Modal';
 import { Library, Search, Download, Share2, Trash2, Edit, Eye } from 'lucide-react';
-import { useAppStore } from '../store/app.store';
+import { useUIStore } from '../store/ui.store';
 
 interface ContentWithTemplate {
   content_id: string;
@@ -35,7 +35,7 @@ export const ContentLibrary: React.FC = () => {
   const [selectedContent, setSelectedContent] = useState<ContentWithTemplate | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const { addNotification } = useAppStore();
+  const { addNotification } = useUIStore();
 
   useEffect(() => {
     loadContent();

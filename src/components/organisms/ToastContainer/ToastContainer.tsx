@@ -2,7 +2,6 @@ import React, { useState, useCallback, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Toast } from '../../molecules/Toast';
 import { ToastProps, ToastVariant } from '../../molecules/Toast/Toast.types';
-import { zIndex, spacing, animation } from '../../../tokens';
 
 interface ToastContextValue {
   showToast: (options: Omit<ToastProps, 'id'>) => string;
@@ -80,37 +79,28 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
     showInfo
   };
 
-  const positionStyles = {
-    'top-right': { top: spacing[4], right: spacing[4] },
-    'top-left': { top: spacing[4], left: spacing[4] },
-    'bottom-right': { bottom: spacing[4], right: spacing[4] },
-    'bottom-left': { bottom: spacing[4], left: spacing[4] },
-    'top-center': { top: spacing[4], left: '50%', transform: 'translateX(-50%)' },
-    'bottom-center': { bottom: spacing[4], left: '50%', transform: 'translateX(-50%)' }
-  };
-
-  const containerStyles: React.CSSProperties = {
-    position: 'fixed',
-    ...positionStyles[position],
-    zIndex: zIndex.notification,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: spacing[2],
-    pointerEvents: 'none'
-  };
-
-  const toastWrapperStyles: React.CSSProperties = {
-    pointerEvents: 'auto',
-    animation: `slideIn ${animation.duration.normal} ${animation.easing.out}`
+  const positionClasses = {
+    'top-right': 'top-4 right-4',
+    'top-left': 'top-4 left-4',
+    'bottom-right': 'bottom-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+    'top-center': 'top-4 left-1/2 -translate-x-1/2',
+    'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2'
   };
 
   return (
     <ToastContext.Provider value={contextValue}>
       {children}
       {createPortal(
-        <div style={containerStyles} aria-live="polite">
+        <div 
+          className={`fixed ${positionClasses[position]} z-50 flex flex-col gap-2 pointer-events-none`}
+          aria-live="polite"
+        >
           {toasts.map(toast => (
-            <div key={toast.id} style={toastWrapperStyles}>
+            <div 
+              key={toast.id} 
+              className="pointer-events-auto animate-slide-up"
+            >
               <Toast
                 {...toast}
                 onClose={() => hideToast(toast.id)}
@@ -120,18 +110,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
         </div>,
         document.body
       )}
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </ToastContext.Provider>
   );
 };

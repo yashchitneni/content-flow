@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../atoms/Icon';
 import { ProgressModalProps } from './ProgressModal.types';
-import { colors, spacing, borderRadius, shadows, animation, zIndex } from '../../../tokens';
 
 export const ProgressModal: React.FC<ProgressModalProps> = ({
   isOpen,
@@ -26,198 +25,71 @@ export const ProgressModal: React.FC<ProgressModalProps> = ({
 
   if (!isOpen) return null;
 
-  const overlayStyles: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: showOverlay ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: zIndex.modal,
-    pointerEvents: showOverlay ? 'auto' : 'none'
-  };
-
-  const modalStyles: React.CSSProperties = {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    boxShadow: shadows.xl,
-    padding: spacing[6],
-    maxWidth: '480px',
-    width: '90%',
-    maxHeight: '80vh',
-    overflow: 'auto',
-    pointerEvents: 'auto'
-  };
-
-  const headerStyles: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing[6]
-  };
-
-  const titleStyles: React.CSSProperties = {
-    fontSize: '20px',
-    fontWeight: 600,
-    color: colors.gray[900],
-    margin: 0
-  };
-
-  const stepContainerStyles: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: spacing[4]
-  };
-
-  const getStepStyles = (status: string): React.CSSProperties => {
-    const baseStyles: React.CSSProperties = {
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: spacing[3]
-    };
-
-    return baseStyles;
-  };
-
-  const getIconContainerStyles = (status: string): React.CSSProperties => {
-    const baseStyles: React.CSSProperties = {
-      width: '32px',
-      height: '32px',
-      borderRadius: borderRadius.full,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-      transition: `all ${animation.duration.normal} ${animation.easing.inOut}`
-    };
-
-    switch (status) {
-      case 'completed':
-        return {
-          ...baseStyles,
-          backgroundColor: colors.success[100],
-          color: colors.success[600]
-        };
-      case 'active':
-        return {
-          ...baseStyles,
-          backgroundColor: colors.primary[100],
-          color: colors.primary[600]
-        };
-      case 'error':
-        return {
-          ...baseStyles,
-          backgroundColor: colors.error[100],
-          color: colors.error[600]
-        };
-      default:
-        return {
-          ...baseStyles,
-          backgroundColor: colors.gray[100],
-          color: colors.gray[400]
-        };
-    }
-  };
-
-  const stepContentStyles: React.CSSProperties = {
-    flex: 1,
-    paddingTop: '4px'
-  };
-
-  const stepLabelStyles = (status: string): React.CSSProperties => ({
-    fontSize: '16px',
-    fontWeight: status === 'active' ? 600 : 400,
-    color: status === 'error' ? colors.error[700] : colors.gray[900],
-    marginBottom: spacing[1]
-  });
-
-  const stepMessageStyles: React.CSSProperties = {
-    fontSize: '14px',
-    color: colors.gray[600],
-    margin: 0
-  };
-
-  const progressBarContainerStyles: React.CSSProperties = {
-    height: '4px',
-    backgroundColor: colors.gray[200],
-    borderRadius: borderRadius.full,
-    overflow: 'hidden',
-    marginTop: spacing[2]
-  };
-
-  const progressBarStyles = (progress: number): React.CSSProperties => ({
-    height: '100%',
-    backgroundColor: colors.primary[500],
-    width: `${progress}%`,
-    transition: `width ${animation.duration.normal} ${animation.easing.inOut}`
-  });
-
-  const cancelButtonStyles: React.CSSProperties = {
-    marginTop: spacing[6],
-    padding: `${spacing[2]} ${spacing[4]}`,
-    backgroundColor: colors.gray[100],
-    color: colors.gray[700],
-    border: `1px solid ${colors.gray[300]}`,
-    borderRadius: borderRadius.md,
-    fontSize: '16px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: `all ${animation.duration.fast} ${animation.easing.inOut}`
-  };
-
   const getStepIcon = (status: string) => {
     switch (status) {
       case 'completed':
         return <Icon name="check-circle" size="sm" />;
       case 'active':
         return (
-          <div style={{
-            width: '16px',
-            height: '16px',
-            border: `2px solid ${colors.primary[600]}`,
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
+          <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
         );
       case 'error':
         return <Icon name="x-circle" size="sm" />;
       default:
-        return <div style={{
-          width: '16px',
-          height: '16px',
-          backgroundColor: colors.gray[400],
-          borderRadius: '50%'
-        }} />;
+        return <div className="w-4 h-4 bg-gray-400 rounded-full" />;
     }
   };
 
+  const getIconContainerClasses = (status: string) => {
+    const baseClasses = "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300";
+    
+    switch (status) {
+      case 'completed':
+        return `${baseClasses} bg-success-100 text-success-600`;
+      case 'active':
+        return `${baseClasses} bg-primary-100 text-primary-600`;
+      case 'error':
+        return `${baseClasses} bg-error-100 text-error-600`;
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-400`;
+    }
+  };
+
+  const getStepLabelClasses = (status: string) => {
+    return `text-base ${status === 'active' ? 'font-semibold' : 'font-normal'} ${
+      status === 'error' ? 'text-error-700' : 'text-gray-900'
+    } mb-1`;
+  };
+
   return createPortal(
-    <div style={overlayStyles}>
-      <div style={modalStyles}>
-        <div style={headerStyles}>
-          <h2 style={titleStyles}>{title}</h2>
+    <div className={`fixed inset-0 ${showOverlay ? 'bg-black/50' : 'bg-transparent'} flex items-center justify-center z-50 ${showOverlay ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-[480px] w-[90%] max-h-[80vh] overflow-auto pointer-events-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 m-0">{title}</h2>
         </div>
         
-        <div style={stepContainerStyles}>
+        <div className="flex flex-col gap-4">
           {steps.map((step) => (
-            <div key={step.id} style={getStepStyles(step.status)}>
-              <div style={getIconContainerStyles(step.status)}>
+            <div key={step.id} className="flex items-start gap-3">
+              <div className={getIconContainerClasses(step.status)}>
                 {getStepIcon(step.status)}
               </div>
               
-              <div style={stepContentStyles}>
-                <div style={stepLabelStyles(step.status)}>
+              <div className="flex-1 pt-1">
+                <div className={getStepLabelClasses(step.status)}>
                   {step.label}
                 </div>
                 
                 {step.message && (
-                  <p style={stepMessageStyles}>{step.message}</p>
+                  <p className="text-sm text-gray-600 m-0">{step.message}</p>
                 )}
                 
                 {step.status === 'active' && step.progress !== undefined && (
-                  <div style={progressBarContainerStyles}>
-                    <div style={progressBarStyles(step.progress)} />
+                  <div 
+                    className="h-1 bg-gray-200 rounded-full overflow-hidden mt-2"
+                    style={{'--progress-width': `${step.progress}%`} as React.CSSProperties}
+                  >
+                    <div className="h-full bg-primary-500 w-[var(--progress-width)] transition-[width] duration-300" />
                   </div>
                 )}
               </div>
@@ -228,24 +100,12 @@ export const ProgressModal: React.FC<ProgressModalProps> = ({
         {canCancel && onCancel && !allStepsCompleted && (
           <button
             onClick={onCancel}
-            style={cancelButtonStyles}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = colors.gray[200];
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = colors.gray[100];
-            }}
+            className="mt-6 px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md text-base font-medium cursor-pointer transition-colors duration-150 hover:bg-gray-200"
           >
             Cancel Operation
           </button>
         )}
       </div>
-      
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>,
     document.body
   );

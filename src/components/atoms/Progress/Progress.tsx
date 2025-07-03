@@ -46,9 +46,9 @@ export const Progress: React.FC<ProgressProps> = ({
     <div className={`w-full ${className}`} {...props}>
       {(showLabel || label) && (
         <div className="flex justify-between items-center mb-2">
-          {label && <span className="text-sm font-medium text-gray-700">{label}</span>}
+          {label && <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>}
           {showLabel && !indeterminate && (
-            <span className="text-sm font-medium text-gray-700">{Math.round(percentage)}%</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{Math.round(percentage)}%</span>
           )}
         </div>
       )}
@@ -56,6 +56,7 @@ export const Progress: React.FC<ProgressProps> = ({
         className={`
           w-full 
           bg-gray-200 
+          dark:bg-gray-700
           rounded-full 
           overflow-hidden
           ${sizeStyles[size]}
@@ -65,6 +66,7 @@ export const Progress: React.FC<ProgressProps> = ({
         aria-valuemin={0}
         aria-valuemax={max}
         aria-label={ariaLabel || label}
+        style={{'--progress-percentage': `${percentage}%`} as React.CSSProperties}
       >
         <div 
           className={`
@@ -73,8 +75,8 @@ export const Progress: React.FC<ProgressProps> = ({
             transition-all duration-300 ease-out
             ${variantStyles[variant]}
             ${indeterminateAnimation}
+            ${indeterminate ? 'w-full' : 'w-[var(--progress-percentage)]'}
           `}
-          style={indeterminate ? { width: '100%' } : { width: `${percentage}%` }}
         />
       </div>
       <style>{`

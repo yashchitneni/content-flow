@@ -9,7 +9,8 @@ import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
 import { Badge } from '../components/atoms/Badge';
 import { Modal } from '../components/atoms/Modal';
-import { useAppStore } from '../store/app.store';
+import { useTranscriptStore } from '../store/transcript.store';
+import { useUIStore } from '../store/ui.store';
 import { mockTranscripts } from '../lib/mock-transcripts';
 import { useUsageStore } from '../store/usage.store';
 
@@ -30,8 +31,10 @@ export const TranscriptLibrary: React.FC = () => {
     toggleTranscriptSelection,
     removeTranscript,
     addTranscripts,
-    addNotification 
-  } = useAppStore();
+    updateTranscript
+  } = useTranscriptStore();
+  
+  const { addNotification } = useUIStore();
 
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: '',

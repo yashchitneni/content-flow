@@ -6,7 +6,9 @@ import { ContentPreviewModal } from '../components/molecules/ContentPreviewModal
 import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
 import { Badge } from '../components/atoms/Badge';
-import { useAppStore } from '../store/app.store';
+import { useTranscriptStore } from '../store/transcript.store';
+import { useApiKeyStore } from '../store/apiKey.store';
+import { useUIStore } from '../store/ui.store';
 import WorkflowOrchestrator from '../workflows';
 // import { generateMockContent, MockGenerationResult } from '../lib/mock-content-generator';
 
@@ -17,16 +19,20 @@ export const ContentStudio: React.FC = () => {
   const [generatedContent, setGeneratedContent] = useState<any | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   
-  // Use global store for transcripts and API keys
+  // Use domain-specific stores
   const { 
     transcripts, 
     selectedTranscriptIds, 
     setSelectedTranscripts, 
-    addTranscripts, 
+    addTranscripts
+  } = useTranscriptStore();
+  
+  const { 
     hasApiKey, 
-    apiKeys,
-    addNotification 
-  } = useAppStore();
+    apiKeys
+  } = useApiKeyStore();
+  
+  const { addNotification } = useUIStore();
 
   const handleTranscriptsImported = (fileData: FileData[] | string[]) => {
     // Handle both file data and string array for backward compatibility

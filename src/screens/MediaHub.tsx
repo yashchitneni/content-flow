@@ -8,14 +8,14 @@ import { Spinner } from '../components/atoms/Spinner';
 import { Tag } from '../components/atoms/Tag';
 import { invoke } from '../lib/tauri-wrapper';
 import { useUsageStore } from '../store/usage.store';
-import { useAppStore } from '../store/app.store';
+import { useTranscriptStore } from '../store/transcript.store';
 
 export const MediaHub: React.FC = () => {
   const [importedVideos, setImportedVideos] = useState<VideoFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const updateStorageUsage = useUsageStore((state) => state.updateStorageUsage);
-  const transcripts = useAppStore((state) => state.transcripts);
+  const transcripts = useTranscriptStore((state) => state.transcripts);
 
   const loadImportedVideos = async () => {
     try {

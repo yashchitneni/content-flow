@@ -1,5 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { colors, spacing, borderRadius } from '../../../tokens';
 import { Icon } from '../../atoms/Icon';
 import { AppError, ErrorType } from '../../../lib/errors';
 
@@ -140,99 +139,38 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         ? (error as AppError).userMessage
         : 'Something went wrong. Please try refreshing the page.';
 
-      const containerStyles: React.CSSProperties = {
-        padding: spacing[8],
-        textAlign: 'center',
-        minHeight: isolate ? 'auto' : '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.gray[50]
-      };
-
-      const errorBoxStyles: React.CSSProperties = {
-        backgroundColor: colors.white,
-        borderRadius: borderRadius.lg,
-        padding: spacing[6],
-        maxWidth: '500px',
-        width: '100%',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        border: `1px solid ${colors.gray[200]}`
-      };
-
-      const iconContainerStyles: React.CSSProperties = {
-        marginBottom: spacing[4],
-        color: colors.error[500]
-      };
-
-      const titleStyles: React.CSSProperties = {
-        fontSize: '24px',
-        fontWeight: 600,
-        color: colors.gray[900],
-        marginBottom: spacing[2]
-      };
-
-      const messageStyles: React.CSSProperties = {
-        fontSize: '16px',
-        color: colors.gray[600],
-        marginBottom: spacing[6],
-        lineHeight: '24px'
-      };
-
-      const buttonStyles: React.CSSProperties = {
-        backgroundColor: colors.primary[500],
-        color: colors.white,
-        border: 'none',
-        borderRadius: borderRadius.md,
-        padding: `${spacing[3]} ${spacing[6]}`,
-        fontSize: '16px',
-        fontWeight: 500,
-        cursor: 'pointer',
-        transition: 'background-color 0.2s'
-      };
-
-      const detailsStyles: React.CSSProperties = {
-        marginTop: spacing[4],
-        padding: spacing[3],
-        backgroundColor: colors.gray[100],
-        borderRadius: borderRadius.md,
-        fontSize: '14px',
-        color: colors.gray[700],
-        textAlign: 'left',
-        maxHeight: '200px',
-        overflow: 'auto'
-      };
+      const containerClasses = [
+        'p-8 text-center flex flex-col items-center justify-center bg-gray-50',
+        isolate ? 'min-h-0' : 'min-h-screen'
+      ].join(' ');
 
       return (
-        <div style={containerStyles}>
-          <div style={errorBoxStyles}>
-            <div style={iconContainerStyles}>
+        <div className={containerClasses}>
+          <div className="bg-white rounded-lg p-6 max-w-[500px] w-full shadow border border-gray-200">
+            <div className="mb-4 text-error-500">
               <Icon name="alert-circle" size="lg" />
             </div>
             
-            <h1 style={titleStyles}>Oops! Something went wrong</h1>
-            <p style={messageStyles}>{errorMessage}</p>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+              Oops! Something went wrong
+            </h1>
+            <p className="text-base text-gray-600 mb-6 leading-6">
+              {errorMessage}
+            </p>
             
             <button
               onClick={this.resetErrorBoundary}
-              style={buttonStyles}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors.primary[600];
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = colors.primary[500];
-              }}
+              className="bg-primary-500 text-white border-none rounded-md px-6 py-3 text-base font-medium cursor-pointer transition-colors hover:bg-primary-600"
             >
               Try Again
             </button>
             
-            {import.meta.env.DEV && error && (
-              <details style={detailsStyles}>
-                <summary style={{ cursor: 'pointer', marginBottom: spacing[2] }}>
+            {process.env.NODE_ENV === 'development' && error && (
+              <details className="mt-4 p-3 bg-gray-100 rounded-md text-sm text-gray-700 text-left max-h-[200px] overflow-auto">
+                <summary className="cursor-pointer mb-2">
                   Error Details (Development Only)
                 </summary>
-                <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                <pre className="m-0 whitespace-pre-wrap">
                   {error.toString()}
                   {errorInfo && errorInfo.componentStack}
                 </pre>

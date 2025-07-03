@@ -1,19 +1,20 @@
 import React from 'react';
 import { IconProps } from './Icon.types';
 
-const iconSizes = {
-  sm: 16,
-  md: 20,
-  lg: 24
+const iconSizeClasses = {
+  sm: 'w-4 h-4',
+  md: 'w-5 h-5',
+  lg: 'w-6 h-6'
 };
 
 export const Icon: React.FC<IconProps> = ({ 
   name, 
   size = 'md', 
-  color = 'currentColor',
+  color,
   className = ''
 }) => {
-  const iconSize = iconSizes[size];
+  const sizeClass = iconSizeClasses[size];
+  const colorClass = color ? '' : 'text-current';
   
   const icons: Record<string, React.JSX.Element> = {
     'check': (
@@ -139,8 +140,8 @@ export const Icon: React.FC<IconProps> = ({
   
   return (
     <span 
-      className={`inline-flex ${className}`}
-      style={{ width: iconSize, height: iconSize, color }}
+      className={`inline-flex ${sizeClass} ${colorClass} ${className}`}
+      style={color ? { color } : undefined}
     >
       {icons[name] || null}
     </span>

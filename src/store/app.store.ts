@@ -1,179 +1,77 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface ApiKeys {
-  openai?: string;
-  claude?: string;
-  descript?: string;
-}
+// Re-export the new stores for backward compatibility during migration
+export { useApiKeyStore } from './apiKey.store';
+export { useTranscriptStore } from './transcript.store';
+export { useSettingsStore } from './settings.store';
+export { useUIStore } from './ui.store';
 
-interface TranscriptData {
-  id: string;
-  filename: string;
-  word_count: number;
-  language: string;
-  content_preview: string;
-  full_content?: string;
-  imported_at: string;
-  status: 'imported' | 'processing' | 'error';
-  tags?: Array<{ tag: string; relevance: number }>;
-  content_score?: number;
-  rating?: number; // 1-5 star rating
-  platform_scores?: {
-    thread: number;
-    carousel: number;
-    blog: number;
-  };
-}
-
-interface AppState {
-  // API Keys
-  apiKeys: ApiKeys;
-  setApiKey: (provider: keyof ApiKeys, key: string) => void;
-  removeApiKey: (provider: keyof ApiKeys) => void;
-  hasApiKey: (provider: keyof ApiKeys) => boolean;
+// Migration helper to transfer data from old store to new stores
+export const migrateAppStore = () => {
+  const oldData = localStorage.getItem('contentflow-storage');
   
-  // Transcripts
-  transcripts: TranscriptData[];
-  addTranscripts: (transcripts: TranscriptData[]) => void;
-  removeTranscript: (id: string) => void;
-  updateTranscript: (id: string, data: Partial<TranscriptData>) => void;
-  clearTranscripts: () => void;
-  getTranscriptById: (id: string) => TranscriptData | undefined;
-  
-  // Selected transcripts for content generation
-  selectedTranscriptIds: string[];
-  setSelectedTranscripts: (ids: string[]) => void;
-  toggleTranscriptSelection: (id: string) => void;
-  
-  // UI State
-  notifications: Array<{ id: string; type: 'success' | 'error' | 'info'; message: string; timestamp: number }>;
-  addNotification: (type: 'success' | 'error' | 'info', message: string) => void;
-  removeNotification: (id: string) => void;
-  
-  // Automation Mode
-  isAutoGenerateEnabled: boolean;
-  defaultAutomationTemplateId: string | null;
-  setIsAutoGenerateEnabled: (isEnabled: boolean) => void;
-  setDefaultAutomationTemplateId: (templateId: string | null) => void;
-}
-
-export const useAppStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      apiKeys: {},
-      transcripts: [],
-      selectedTranscriptIds: [],
-      notifications: [],
-      isAutoGenerateEnabled: false,
-      defaultAutomationTemplateId: null,
+  if (oldData) {
+    try {
+      const parsed = JSON.parse(oldData);
+      const state = parsed.state;
       
-      // API Key methods
-      setApiKey: (provider, key) => {
-        console.log(`[Store] Setting API key for ${provider}`);
-        set((state) => {
-          const newApiKeys = { ...state.apiKeys, [provider]: key };
-          console.log('[Store] New API keys state:', newApiKeys);
-          return { apiKeys: newApiKeys };
-        });
-      },
-      
-      removeApiKey: (provider) => {
-        set((state) => {
-          const newKeys = { ...state.apiKeys };
-          delete newKeys[provider];
-          return { apiKeys: newKeys };
-        });
-      },
-      
-      hasApiKey: (provider) => {
-        const state = get();
-        return !!state.apiKeys[provider];
-      },
-      
-      // Transcript methods
-      addTranscripts: (newTranscripts) => {
-        set((state) => ({
-          transcripts: [...newTranscripts, ...state.transcripts.filter(t => 
-            !newTranscripts.some(nt => nt.id === t.id)
-          )]
-        }));
-      },
-      
-      removeTranscript: (id) => {
-        set((state) => ({
-          transcripts: state.transcripts.filter(t => t.id !== id),
-          selectedTranscriptIds: state.selectedTranscriptIds.filter(tid => tid !== id)
-        }));
-      },
-      
-      updateTranscript: (id, data) => {
-        set((state) => ({
-          transcripts: state.transcripts.map(t => 
-            t.id === id ? { ...t, ...data } : t
-          )
-        }));
-      },
-      
-      clearTranscripts: () => {
-        set({ transcripts: [], selectedTranscriptIds: [] });
-      },
-      
-      getTranscriptById: (id) => {
-        const state = get();
-        return state.transcripts.find(t => t.id === id);
-      },
-      
-      // Selection methods
-      setSelectedTranscripts: (ids) => {
-        set({ selectedTranscriptIds: ids });
-      },
-      
-      toggleTranscriptSelection: (id) => {
-        set((state) => ({
-          selectedTranscriptIds: state.selectedTranscriptIds.includes(id)
-            ? state.selectedTranscriptIds.filter(tid => tid !== id)
-            : [...state.selectedTranscriptIds, id]
-        }));
-      },
-      
-      // Notification methods
-      addNotification: (type, message) => {
-        const id = `notification-${Date.now()}`;
-        set((state) => ({
-          notifications: [...state.notifications, { id, type, message, timestamp: Date.now() }]
-        }));
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-          get().removeNotification(id);
-        }, 5000);
-      },
-      
-      removeNotification: (id) => {
-        set((state) => ({
-          notifications: state.notifications.filter(n => n.id !== id)
-        }));
-      },
-      
-      // Automation methods
-      setIsAutoGenerateEnabled: (isEnabled) => {
-        set({ isAutoGenerateEnabled: isEnabled });
-      },
-      
-      setDefaultAutomationTemplateId: (templateId) => {
-        set({ defaultAutomationTemplateId: templateId });
+      // Migrate API keys
+      if (state.apiKeys) {
+        const apiKeyData = {
+          state: { apiKeys: state.apiKeys },
+          version: 0
+        };
+        localStorage.setItem('contentflow-apikeys', JSON.stringify(apiKeyData));
       }
-    }),
-    {
-      name: 'contentflow-storage',
-      partialize: (state) => ({
-        apiKeys: state.apiKeys,
-        transcripts: state.transcripts,
-        isAutoGenerateEnabled: state.isAutoGenerateEnabled,
-        defaultAutomationTemplateId: state.defaultAutomationTemplateId
-      })
+      
+      // Migrate transcripts
+      if (state.transcripts) {
+        const transcriptData = {
+          state: { transcripts: state.transcripts },
+          version: 0
+        };
+        localStorage.setItem('contentflow-transcripts', JSON.stringify(transcriptData));
+      }
+      
+      // Migrate settings
+      if (state.isAutoGenerateEnabled !== undefined || state.defaultAutomationTemplateId !== undefined) {
+        const settingsData = {
+          state: {
+            isAutoGenerateEnabled: state.isAutoGenerateEnabled || false,
+            defaultAutomationTemplateId: state.defaultAutomationTemplateId || null
+          },
+          version: 0
+        };
+        localStorage.setItem('contentflow-settings', JSON.stringify(settingsData));
+      }
+      
+      // Remove old storage after successful migration
+      localStorage.removeItem('contentflow-storage');
+      console.log('[Migration] Successfully migrated app store to domain-specific stores');
+    } catch (error) {
+      console.error('[Migration] Failed to migrate app store:', error);
     }
-  )
-);
+  }
+};
+
+// Run migration on import
+if (typeof window !== 'undefined') {
+  migrateAppStore();
+}
+
+/**
+ * @deprecated The useAppStore is deprecated and will be removed in a future version.
+ * Please use the domain-specific stores instead:
+ * - useApiKeyStore for API key management
+ * - useTranscriptStore for transcript data
+ * - useSettingsStore for automation settings  
+ * - useUIStore for notifications
+ */
+interface DeprecatedAppState {
+  _deprecated: true;
+}
+
+export const useAppStore = create<DeprecatedAppState>(() => ({
+  _deprecated: true
+}));

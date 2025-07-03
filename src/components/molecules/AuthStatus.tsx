@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../lib/auth/AuthContext';
-import { AuthButton } from '../atoms/AuthButton';
+import { Button } from '../atoms/Button';
 
 export const AuthStatus: React.FC = () => {
   const { authState, isLoading, error, initiateAuth, logout } = useAuth();
@@ -86,13 +86,13 @@ export const AuthStatus: React.FC = () => {
               )}
             </div>
           </div>
-          <AuthButton
+          <Button
             onClick={logout}
-            variant="danger"
+            variant="destructive"
             size="small"
           >
             Disconnect
-          </AuthButton>
+          </Button>
         </div>
       </div>
     );
@@ -125,13 +125,13 @@ export const AuthStatus: React.FC = () => {
             </p>
           </div>
         </div>
-        <AuthButton
+        <Button
           onClick={initiateAuth}
           variant="primary"
           size="small"
         >
           Connect Descript
-        </AuthButton>
+        </Button>
       </div>
     </div>
   );

@@ -36,7 +36,7 @@ This module implements secure OAuth 2.0 authentication for Descript integration 
    - Exposes auth methods
 
 2. **Components**:
-   - `AuthButton`: Reusable button atom with loading states
+   - `Button`: Reusable button atom with loading states
    - `AuthStatus`: Auth status display molecule
    - `AuthGuard`: Protected route wrapper organism
    - `AuthCallback`: OAuth callback handler screen

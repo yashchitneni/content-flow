@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAppStore } from '../../../store/app.store';
+import { useUIStore } from '../../../store/ui.store';
 import { Icon } from '../../atoms/Icon';
 
 export const NotificationContainer: React.FC = () => {
-  const { notifications, removeNotification } = useAppStore();
+  const { notifications, removeNotification } = useUIStore();
 
   if (notifications.length === 0) return null;
 

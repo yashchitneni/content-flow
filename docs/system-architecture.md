@@ -158,31 +158,40 @@ Templates and settings
 
 
 Core Database Schema:
-sql-- Simplified schema focusing on essentials
-CREATE TABLE files (
-    id TEXT PRIMARY KEY,
-    path TEXT NOT NULL,
-    orientation TEXT,
-    duration REAL,
-    created_at DATETIME,
-    status TEXT
+SQL-- Core Database Schema
+CREATE TABLE File (
+    FileID TEXT PRIMARY KEY,
+    FolderID TEXT,
+    FilePath TEXT NOT NULL,
+    ...
 );
 
-CREATE TABLE transcripts (
-    id TEXT PRIMARY KEY,
-    file_id TEXT,
-    content TEXT,
-    tags TEXT, -- JSON array
-    created_at DATETIME,
-    FOREIGN KEY (file_id) REFERENCES files(id)
+CREATE TABLE Transcript (
+    TranscriptID TEXT PRIMARY KEY,
+    FileID TEXT NOT NULL UNIQUE,
+    Content TEXT,
+    ...
+    FOREIGN KEY (FileID) REFERENCES File(FileID)
 );
 
-CREATE TABLE generated_content (
-    id TEXT PRIMARY KEY,
-    transcript_ids TEXT, -- JSON array
-    template_type TEXT,
-    content TEXT, -- JSON structure
-    created_at DATETIME
+CREATE TABLE GeneratedContent (
+    ContentID TEXT PRIMARY KEY,
+    TemplateID TEXT NOT NULL,
+    ContentData TEXT NOT NULL, -- JSON
+    ...
+);
+
+-- Junction Tables for Many-to-Many Relationships
+CREATE TABLE TranscriptTags (
+    TranscriptID TEXT,
+    TagID TEXT,
+    PRIMARY KEY (TranscriptID, TagID)
+);
+
+CREATE TABLE ContentSources (
+    ContentID TEXT,
+    TranscriptID TEXT,
+    PRIMARY KEY (ContentID, TranscriptID)
 );
 6. Deployment View
 macOS Application Structure:
