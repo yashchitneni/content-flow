@@ -5,6 +5,7 @@ import { TranscriptDropZone, TranscriptSummary, FileData } from '../components/m
 import { ContentPreviewModal } from '../components/molecules/ContentPreviewModal';
 import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
+import { Badge } from '../components/atoms/Badge';
 import { useAppStore } from '../store/app.store';
 import WorkflowOrchestrator from '../workflows';
 // import { generateMockContent, MockGenerationResult } from '../lib/mock-content-generator';
@@ -373,18 +374,34 @@ export const ContentStudio: React.FC = () => {
           </div>
         )}
 
-        {/* Help Section */}
-        <div className="mt-6 bg-green-50 dark:bg-success-900/20 border border-green-200 dark:border-success-500/30 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <Icon name="check-circle" className="w-5 h-5 text-green-600 dark:text-success-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-green-800 dark:text-success-300">
-              <div className="font-medium mb-1">Live Folder System Ready!</div>
-              <div>Your workflow:</div>
-              <ol className="list-decimal list-inside mt-2 space-y-1">
-                <li>Export transcript from Descript as .txt or .srt</li>
-                <li>Drop the file here or click anywhere in the box</li>
-                <li>Select template and generate content</li>
-                <li>Content will be created using LangGraph workflows</li>
+        {/* Help Section - Premium Glass Style */}
+        <div className="mt-6 glass-ultra rounded-xl shadow-theme-glass border border-theme p-6 hover-lift">
+          <div className="flex items-start gap-4">
+            <div className="p-2 glass rounded-lg">
+              <Icon name="check-circle" className="w-5 h-5 text-success-400" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <h3 className="text-lg font-semibold text-theme-primary">Workflow Ready</h3>
+                <Badge variant="success" size="sm">Live Folder System</Badge>
+              </div>
+              <ol className="space-y-2 text-theme-secondary">
+                <li className="flex items-start gap-2">
+                  <span className="text-success-400 font-medium">1.</span>
+                  <span>Export transcript from Descript as .txt or .srt</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success-400 font-medium">2.</span>
+                  <span>Drop the file here or click anywhere in the box</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success-400 font-medium">3.</span>
+                  <span>Select template and generate content</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success-400 font-medium">4.</span>
+                  <span>Content will be created using LangGraph workflows</span>
+                </li>
               </ol>
             </div>
           </div>

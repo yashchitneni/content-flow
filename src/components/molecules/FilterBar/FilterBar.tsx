@@ -35,12 +35,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   ];
 
   return (
-    <div className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-lg p-4">
+    <div className="glass-ultra rounded-xl shadow-theme-glass border border-theme p-6 hover-lift">
       <div className="flex flex-wrap items-center gap-4">
         {/* Tags */}
         {tags.length > 0 && (
           <div className="flex items-center gap-2 flex-1">
-            <span className="text-sm font-medium text-gray-700 dark:text-dark-300">Tags:</span>
+            <span className="text-sm font-medium text-theme-secondary">Tags:</span>
             <div className="flex flex-wrap gap-2">
               {tags.slice(0, 8).map((tag) => (
                 <Badge
@@ -67,7 +67,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
         {/* Sort */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-dark-300">Sort:</span>
+          <span className="text-sm font-medium text-theme-secondary">Sort:</span>
           <Select
             value={sortBy}
             onChange={(value) => onSortChange(value as any, sortOrder)}
@@ -88,7 +88,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
 
         {/* View Mode */}
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-dark-700 rounded-lg p-1">
+        <div className="flex items-center gap-1 glass rounded-lg p-1">
           <Button
             size="small"
             variant={viewMode === 'grid' ? 'primary' : 'ghost'}
@@ -106,13 +106,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       {/* Selected Tags Summary */}
       {selectedTags.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-700 flex items-center justify-between">
-          <span className="text-sm text-gray-600 dark:text-dark-400">
+        <div className="mt-3 pt-3 border-t border-theme flex items-center justify-between">
+          <span className="text-sm text-theme-tertiary">
             Filtering by {selectedTags.length} tag{selectedTags.length > 1 ? 's' : ''}
           </span>
           <button
             onClick={() => selectedTags.forEach(tag => onTagToggle(tag))}
-            className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+            className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
           >
             Clear all tags
           </button>
