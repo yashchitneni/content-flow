@@ -1,5 +1,5 @@
 // Task #14: AI-Powered Tag Extraction Service
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '../lib/tauri-wrapper';
 import { TranscriptAnalysisWorkflow } from '../workflows/transcript-analysis.workflow';
 import { loadConfig } from '../config/workflow.config';
 import { toast } from 'sonner';

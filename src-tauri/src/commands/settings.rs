@@ -1,5 +1,5 @@
 use crate::services::settings::{
-    ApiKey, BrandSettings, FileOrganization, Preferences, Settings, SettingsService, UsageStats,
+    BrandSettings, FileOrganization, Preferences, SettingsService, UsageStats,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;

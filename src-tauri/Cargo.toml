@@ -12,10 +12,6 @@ default-run = "contentflow"
 name = "contentflow"
 path = "src/main.rs"
 
-[[bin]]
-name = "test_search"
-path = "src/bin/test_search.rs"
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

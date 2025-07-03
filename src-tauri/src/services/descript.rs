@@ -1,7 +1,6 @@
 use reqwest::{Client, multipart};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 use std::sync::Arc;
@@ -10,7 +9,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 use tokio::time::sleep;
 
-use super::descript_auth::{DescriptAuth, AuthTokens, AuthError};
+use super::descript_auth::DescriptAuth;
 
 const DESCRIPT_API_BASE: &str = "https://api.descript.com/v1";
 const MAX_CONCURRENT_UPLOADS: usize = 3;

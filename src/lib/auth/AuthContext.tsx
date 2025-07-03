@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
-import { listen } from '@tauri-apps/api/event';
+import { invoke, listen } from '../tauri-wrapper';
 
 interface AuthState {
   isAuthenticated: boolean;

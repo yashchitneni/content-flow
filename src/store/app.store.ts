@@ -50,6 +50,12 @@ interface AppState {
   notifications: Array<{ id: string; type: 'success' | 'error' | 'info'; message: string; timestamp: number }>;
   addNotification: (type: 'success' | 'error' | 'info', message: string) => void;
   removeNotification: (id: string) => void;
+  
+  // Automation Mode
+  isAutoGenerateEnabled: boolean;
+  defaultAutomationTemplateId: string | null;
+  setIsAutoGenerateEnabled: (isEnabled: boolean) => void;
+  setDefaultAutomationTemplateId: (templateId: string | null) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -60,6 +66,8 @@ export const useAppStore = create<AppState>()(
       transcripts: [],
       selectedTranscriptIds: [],
       notifications: [],
+      isAutoGenerateEnabled: false,
+      defaultAutomationTemplateId: null,
       
       // API Key methods
       setApiKey: (provider, key) => {
@@ -147,13 +155,24 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           notifications: state.notifications.filter(n => n.id !== id)
         }));
+      },
+      
+      // Automation methods
+      setIsAutoGenerateEnabled: (isEnabled) => {
+        set({ isAutoGenerateEnabled: isEnabled });
+      },
+      
+      setDefaultAutomationTemplateId: (templateId) => {
+        set({ defaultAutomationTemplateId: templateId });
       }
     }),
     {
       name: 'contentflow-storage',
       partialize: (state) => ({
         apiKeys: state.apiKeys,
-        transcripts: state.transcripts
+        transcripts: state.transcripts,
+        isAutoGenerateEnabled: state.isAutoGenerateEnabled,
+        defaultAutomationTemplateId: state.defaultAutomationTemplateId
       })
     }
   )

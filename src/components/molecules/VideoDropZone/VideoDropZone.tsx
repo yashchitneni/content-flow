@@ -4,9 +4,7 @@ import { Icon } from '../../atoms/Icon';
 import { Button } from '../../atoms/Button';
 import { Progress } from '../../atoms/Progress';
 import { Badge } from '../../atoms/Badge';
-import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
-import { listen } from '@tauri-apps/api/event';
+import { invoke, open, listen } from '../../../lib/tauri-wrapper';
 
 export interface VideoFile {
   id: string;

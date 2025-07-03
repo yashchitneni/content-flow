@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '../lib/tauri-wrapper';
 import { Button } from '../components/atoms/Button';
 import { Icon } from '../components/atoms/Icon';
 import { IconName } from '../components/atoms/Icon/Icon.types';

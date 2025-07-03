@@ -1,8 +1,10 @@
 // Task #14: Hook for importing transcripts with automatic tag extraction
 import { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '../lib/tauri-wrapper';
 import { tagExtractionService } from '../services/tag-extraction.service';
 import { toast } from 'sonner';
+import { useAppStore } from '../store/app.store';
+import { WorkflowOrchestrator } from '../workflows';
 
 export interface TranscriptImportResult {
   success: boolean;
@@ -24,6 +26,14 @@ export interface TranscriptImportResult {
 export const useTranscriptImport = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  
+  // Get automation settings from store
+  const { 
+    isAutoGenerateEnabled, 
+    defaultAutomationTemplateId, 
+    apiKeys,
+    addNotification 
+  } = useAppStore();
 
   const importTranscripts = async (filePaths: string[]) => {
     setIsImporting(true);
@@ -69,6 +79,84 @@ export const useTranscriptImport = () => {
         } catch (error) {
           console.error('Tag extraction failed:', error);
           toast.error('Failed to extract tags, but transcripts were imported', { id: tagToastId });
+        }
+
+        // Phase 3: Automation Mode - Generate content automatically if enabled
+        if (isAutoGenerateEnabled && defaultAutomationTemplateId) {
+          setImportProgress(85);
+          
+          try {
+            // Get the template details
+            const template = await invoke<{
+              template_id: string;
+              template_name: string;
+              template_type: string;
+              prompt: string;
+            }>('get_template', { templateId: defaultAutomationTemplateId });
+            
+            if (template) {
+              // Prepare transcript data for content generation
+              const transcriptData = result.imported_transcripts.map(t => ({
+                id: t.id,
+                content: t.content
+              }));
+              
+              // Map template type to workflow type
+              const templateTypeMap: Record<string, 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script'> = {
+                'thread': 'thread',
+                'carousel': 'carousel',
+                'article': 'blog',
+                'blog': 'blog',
+                'newsletter': 'newsletter',
+                'script': 'video-script',
+                'video-script': 'video-script',
+                'custom': 'blog' // Default custom templates to blog format
+              };
+              
+              const workflowType = templateTypeMap[template.template_type] || 'blog';
+              
+              // Initialize workflow with API keys
+              const workflow = new WorkflowOrchestrator({
+                apiKeys: {
+                  openai: apiKeys.openai || '',
+                  anthropic: apiKeys.claude || ''
+                },
+                aiProvider: apiKeys.openai ? 'openai' : 'anthropic'
+              });
+              
+              // Generate content in the background
+              workflow.generateContent(
+                transcriptData,
+                workflowType,
+                {}, // Use default constraints from template
+                template.template_id
+              ).then(workflowResult => {
+                if (workflowResult && !workflowResult.error) {
+                  const firstTranscript = result.imported_transcripts[0];
+                  addNotification(
+                    'success', 
+                    `Content automatically generated from "${firstTranscript.filename}" using template "${template.template_name}"`
+                  );
+                } else {
+                  addNotification(
+                    'error', 
+                    `Auto-generation failed: ${workflowResult?.error || 'Unknown error'}`
+                  );
+                }
+              }).catch(error => {
+                console.error('Auto-generation error:', error);
+                addNotification(
+                  'error', 
+                  `Auto-generation failed: ${error.message || 'Unknown error'}`
+                );
+              });
+              
+              toast.info('Background content generation started...', { duration: 3000 });
+            }
+          } catch (error) {
+            console.error('Failed to start auto-generation:', error);
+            // Don't show error to user - automation failure shouldn't interrupt import
+          }
         }
 
         setImportProgress(100);

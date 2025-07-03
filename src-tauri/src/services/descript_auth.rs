@@ -3,14 +3,12 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use chrono::{DateTime, Duration, Utc};
+use chrono;
 use rand::RngCore;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::sync::Arc;
 use tauri::{AppHandle, Manager, Emitter};
-use tokio::sync::Mutex;
 use std::collections::HashMap;
 
 const DESCRIPT_AUTH_URL: &str = "https://api.descript.com/oauth/authorize";
@@ -376,13 +374,15 @@ impl DescriptAuth {
     }
 }
 
-// Auto-refresh manager
+// Auto-refresh manager - Currently unused but kept for future implementation
+// This will be used to automatically refresh tokens in the background
 #[allow(dead_code)]
 pub struct TokenRefreshManager {
     auth: DescriptAuth,
     app: AppHandle,
 }
 
+#[allow(dead_code)]
 impl TokenRefreshManager {
     pub fn new(auth: DescriptAuth, app: AppHandle) -> Self {
         Self { auth, app }

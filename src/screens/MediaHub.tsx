@@ -6,7 +6,7 @@ import { Icon } from '../components/atoms/Icon';
 import { Badge } from '../components/atoms/Badge';
 import { Spinner } from '../components/atoms/Spinner';
 import { Tag } from '../components/atoms/Tag';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '../lib/tauri-wrapper';
 import { useUsageStore } from '../store/usage.store';
 import { useAppStore } from '../store/app.store';
 

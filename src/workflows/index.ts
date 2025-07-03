@@ -43,12 +43,14 @@ export class WorkflowOrchestrator {
   async generateContent(
     transcripts: Array<{ id: string; content: string; analysis?: any }>,
     templateType: 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script',
-    templateConstraints?: Record<string, any>
+    templateConstraints?: Record<string, any>,
+    templateId?: string
   ) {
     console.log('[WorkflowOrchestrator] generateContent called with:', {
       transcriptCount: transcripts.length,
       templateType,
       templateConstraints,
+      templateId,
       firstTranscriptSample: transcripts[0]?.content?.substring(0, 100)
     });
     
@@ -58,6 +60,7 @@ export class WorkflowOrchestrator {
         template: {
           type: templateType,
           constraints: templateConstraints,
+          templateId,
         },
         messages: [],
       });

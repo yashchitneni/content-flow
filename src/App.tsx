@@ -5,13 +5,16 @@ import { ContentStudio } from './screens/ContentStudio';
 import { DatabaseStatus } from './screens/DatabaseStatus';
 import { MediaHub } from './screens/MediaHub';
 import { TranscriptLibrary } from './screens/TranscriptLibrary';
+import { TemplateStudio } from './screens/TemplateStudio';
+import { ContentLibrary } from './screens/ContentLibrary';
 import { Button } from './components/atoms/Button';
 import { ThemeToggle } from './components/atoms/ThemeToggle';
 import { NotificationContainer } from './components/molecules/NotificationContainer';
 import { DebugPanel } from './components/molecules/DebugPanel';
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<'settings' | 'content-studio' | 'media-hub' | 'database' | 'transcript-library'>('media-hub');
+  console.log('App component rendering');
+  const [currentScreen, setCurrentScreen] = useState<'settings' | 'content-studio' | 'media-hub' | 'database' | 'transcript-library' | 'template-studio' | 'content-library'>('media-hub');
 
   return (
     <ThemeProvider defaultTheme="dark">
@@ -56,6 +59,26 @@ function App() {
                 Content Studio
               </Button>
               
+              {/* Template Studio */}
+              <Button 
+                variant={currentScreen === 'template-studio' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setCurrentScreen('template-studio')}
+                className={`transition-all duration-300 ${currentScreen === 'template-studio' ? 'shadow-glow' : 'hover:shadow-glow-subtle'}`}
+              >
+                Templates
+              </Button>
+              
+              {/* Content Library */}
+              <Button 
+                variant={currentScreen === 'content-library' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setCurrentScreen('content-library')}
+                className={`transition-all duration-300 ${currentScreen === 'content-library' ? 'shadow-glow' : 'hover:shadow-glow-subtle'}`}
+              >
+                Library
+              </Button>
+              
               {/* Step 4: Settings */}
               <Button 
                 variant={currentScreen === 'settings' ? 'primary' : 'secondary'}
@@ -79,6 +102,8 @@ function App() {
           {currentScreen === 'media-hub' && <MediaHub />}
           {currentScreen === 'transcript-library' && <TranscriptLibrary />}
           {currentScreen === 'content-studio' && <ContentStudio />}
+          {currentScreen === 'template-studio' && <TemplateStudio />}
+          {currentScreen === 'content-library' && <ContentLibrary />}
           {currentScreen === 'settings' && <Settings />}
           {currentScreen === 'database' && <DatabaseStatus />}
         </div>

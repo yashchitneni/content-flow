@@ -1,7 +1,9 @@
 // Task #17: Create Content Generation UI - Template System
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { invoke } from '../../../lib/tauri-wrapper';
 import { Icon } from '../../atoms/Icon';
 import { Badge } from '../../atoms/Badge';
+import { Spinner } from '../../atoms/Spinner';
 import { TemplateSelectorProps, TemplateCardProps, Template, ContentTemplate } from './TemplateSelector.types';
 
 // FR-042: Template definitions for Instagram Carousel, Twitter Thread, LinkedIn Article, YouTube Script
@@ -134,12 +136,99 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isSelected, onSel
   );
 };
 
+interface DatabaseTemplate {
+  template_id: string;
+  template_name: string;
+  template_type: string;
+  description: string | null;
+  prompt: string;
+  constraints: string | null;
+  is_default: boolean;
+}
+
 export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   selectedTemplate,
   onTemplateSelect,
   disabled = false,
   className = ''
 }) => {
+  const [templates, setTemplates] = useState<Template[]>(TEMPLATES);
+  const [customTemplates, setCustomTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const dbTemplates = await invoke<DatabaseTemplate[]>('get_all_templates');
+      
+      // Convert database templates to UI templates
+      const convertedTemplates = dbTemplates
+        .filter(t => !t.is_default) // Only get custom templates
+        .map(dbTemplate => {
+          let constraints: any = {};
+          try {
+            constraints = dbTemplate.constraints ? JSON.parse(dbTemplate.constraints) : {};
+          } catch (e) {
+            console.error('Failed to parse constraints:', e);
+          }
+
+          // Map database types to UI template format
+          const iconMap: Record<string, string> = {
+            'thread': 'message-circle',
+            'carousel': 'image',
+            'article': 'file-text',
+            'blog': 'file-text',
+            'newsletter': 'mail',
+            'script': 'video',
+            'video-script': 'video',
+            'custom': 'code'
+          };
+
+          return {
+            id: dbTemplate.template_id,
+            name: dbTemplate.template_name,
+            description: dbTemplate.description || 'Custom template',
+            icon: iconMap[dbTemplate.template_type] || 'file-text',
+            constraints: {
+              characterLimit: constraints.characterLimit,
+              slideLimit: constraints.slideLimit,
+              formatRules: constraints.formatRules || ['Custom format'],
+              platforms: constraints.platforms || ['Custom']
+            },
+            preview: constraints.preview || dbTemplate.prompt.substring(0, 200) + '...',
+            isCustom: true
+          };
+        });
+
+      setCustomTemplates(convertedTemplates);
+      
+      // Combine default and custom templates
+      setTemplates([...TEMPLATES, ...convertedTemplates]);
+    } catch (err) {
+      console.error('Failed to load templates:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load templates');
+      // Fall back to default templates
+      setTemplates(TEMPLATES);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Spinner size="md" />
+      </div>
+    );
+  }
+
   return (
     <div className={`${className}`}>
       <div className="mb-6">
@@ -150,17 +239,49 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           Select a template to generate platform-optimized content from your transcript
         </p>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 glass rounded-lg border border-theme-error">
+          <p className="text-sm text-theme-error">{error}</p>
+        </div>
+      )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {TEMPLATES.map((template) => (
-          <TemplateCard
-            key={template.id}
-            template={template}
-            isSelected={selectedTemplate === template.id}
-            onSelect={onTemplateSelect}
-            disabled={disabled}
-          />
-        ))}
+      {customTemplates.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">
+            Custom Templates
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {customTemplates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                isSelected={selectedTemplate === template.id}
+                onSelect={onTemplateSelect}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        {customTemplates.length > 0 && (
+          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">
+            Default Templates
+          </h3>
+        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {TEMPLATES.map((template) => (
+            <TemplateCard
+              key={template.id}
+              template={template}
+              isSelected={selectedTemplate === template.id}
+              onSelect={onTemplateSelect}
+              disabled={disabled}
+            />
+          ))}
+        </div>
       </div>
       
       {selectedTemplate && (
@@ -168,7 +289,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           <div className="flex items-center space-x-2">
             <Icon name="check-circle" className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             <span className="text-sm font-medium text-primary-800 dark:text-primary-300">
-              Template selected: {TEMPLATES.find(t => t.id === selectedTemplate)?.name}
+              Template selected: {templates.find(t => t.id === selectedTemplate)?.name}
             </span>
           </div>
         </div>

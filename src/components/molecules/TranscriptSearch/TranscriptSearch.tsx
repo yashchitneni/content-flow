@@ -1,6 +1,6 @@
 // Task #12: Transcript Search Component
 import React, { useState, useCallback, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '../../../lib/tauri-wrapper';
 import { Icon } from '../../atoms/Icon';
 
 interface TranscriptSearchResult {

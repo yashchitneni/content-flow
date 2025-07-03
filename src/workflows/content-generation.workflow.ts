@@ -5,6 +5,7 @@ import { BaseWorkflow, BaseWorkflowState } from './base-workflow';
 import { WorkflowConfig } from '../config/workflow.config';
 import { RetryableError } from '../lib/browser-error-handler';
 import { END } from '@langchain/langgraph';
+import { invoke } from '../lib/tauri-wrapper';
 
 export interface ContentGenerationState extends BaseWorkflowState {
   transcripts: Array<{
@@ -20,12 +21,14 @@ export interface ContentGenerationState extends BaseWorkflowState {
     type: 'thread' | 'carousel' | 'newsletter' | 'blog' | 'video-script';
     format?: string;
     constraints?: Record<string, any>;
+    templateId?: string; // Add template ID for saving
   };
   generatedContent?: {
     title: string;
     content: string | string[];
     format: string;
     metadata: Record<string, any>;
+    contentId?: string; // ID after saving
   };
 }
 
@@ -101,6 +104,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     this.graph.addNode('prepareContext', this.prepareContext.bind(this));
     this.graph.addNode('generateContent', this.generateContent.bind(this));
     this.graph.addNode('formatContent', this.formatContent.bind(this));
+    this.graph.addNode('saveContent', this.saveContent.bind(this));
     this.graph.addNode('validateOutput', this.validateOutput.bind(this));
     
     this.graph.setEntryPoint('validateInput');
@@ -108,7 +112,8 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     this.graph.addEdge('validateInput', 'prepareContext');
     this.graph.addEdge('prepareContext', 'generateContent');
     this.graph.addEdge('generateContent', 'formatContent');
-    this.graph.addEdge('formatContent', 'validateOutput');
+    this.graph.addEdge('formatContent', 'saveContent');
+    this.graph.addEdge('saveContent', 'validateOutput');
     this.graph.addEdge('validateOutput', END);
   }
   
@@ -419,6 +424,68 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
     }
     
     return state;
+  }
+  
+  private async saveContent(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.logStep('saveContent');
+    
+    if (!state.generatedContent) {
+      return state;
+    }
+    
+    try {
+      // Get or create template ID
+      let templateId = state.template.templateId;
+      
+      if (!templateId) {
+        // Get default template ID based on type
+        const templates = await invoke<Array<{ template_id: string; template_type: string; is_default: boolean }>>('get_all_templates');
+        const defaultTemplate = templates.find(t => 
+          t.template_type === state.template.type && t.is_default
+        );
+        
+        if (defaultTemplate) {
+          templateId = defaultTemplate.template_id;
+        } else {
+          // Use a default template ID if none found
+          templateId = `default-${state.template.type}`;
+        }
+      }
+      
+      // Prepare content data
+      const contentData = {
+        title: state.generatedContent.title,
+        content: state.generatedContent.content,
+        metadata: state.generatedContent.metadata,
+      };
+      
+      // Save to database
+      const contentId = await invoke<string>('save_generated_content', {
+        request: {
+          template_id: templateId,
+          title: state.generatedContent.title,
+          content: contentData,
+          source_transcript_ids: state.transcripts.map(t => t.id),
+        },
+      });
+      
+      console.log('[ContentGeneration] Content saved with ID:', contentId);
+      
+      return {
+        ...state,
+        generatedContent: {
+          ...state.generatedContent,
+          contentId,
+        },
+      };
+    } catch (error) {
+      console.error('[ContentGeneration] Failed to save content:', error);
+      // Don't fail the whole workflow if saving fails
+      this.logStep('saveContent', { 
+        warning: `Failed to save content: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      });
+      return state;
+    }
   }
   
   private async validateOutput(state: ContentGenerationState): Promise<ContentGenerationState> {

@@ -4,7 +4,7 @@ use crate::services::descript::{
 };
 use crate::commands::auth::AuthManager;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Emitter, State};
+use tauri::{AppHandle, Manager, State};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -161,7 +161,7 @@ pub async fn open_export_folder(
 
 #[tauri::command]
 pub async fn get_upload_status(
-    upload_manager: State<'_, UploadManager>,
+    _upload_manager: State<'_, UploadManager>,
 ) -> Result<Vec<UploadProgress>, String> {
     // In a real implementation, this would return the current upload status
     // For now, return empty array as uploads are event-driven
@@ -170,8 +170,8 @@ pub async fn get_upload_status(
 
 #[tauri::command] 
 pub async fn cancel_upload(
-    upload_manager: State<'_, UploadManager>,
-    file_path: String,
+    _upload_manager: State<'_, UploadManager>,
+    _file_path: String,
 ) -> Result<(), String> {
     // In a real implementation, this would cancel the specific upload
     // For now, just return success as the upload service handles cancellation internally

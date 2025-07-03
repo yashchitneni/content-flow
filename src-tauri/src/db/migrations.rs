@@ -2,6 +2,7 @@ use sqlx::{SqlitePool, Row};
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_initial_schema", include_str!("migrations/001_initial_schema.sql")),
+    ("002_custom_templates", include_str!("migrations/002_custom_templates.sql")),
 ];
 
 pub async fn run_migrations(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { invoke } from '../../../lib/tauri-wrapper';
 import { ApiKeyInput } from '../../molecules/ApiKeyInput';
 import { UsageStats, UsageStatsItem } from '../../molecules/UsageStats';
 import { PreferenceGroup, PreferenceItem } from '../../organisms/PreferenceGroup';
@@ -59,10 +60,15 @@ export const SettingsPanel: React.FC = () => {
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiKeyValues, setApiKeyValues] = useState<Record<string, string>>({});
+  const [availableTemplates, setAvailableTemplates] = useState<Array<{ template_id: string; template_name: string }>>([]);
   const { showToast } = useToast();
   
   // Use global store for API key management
-  const { apiKeys, setApiKey, removeApiKey, hasApiKey, addNotification } = useAppStore();
+  const { 
+    apiKeys, setApiKey, removeApiKey, hasApiKey, addNotification,
+    isAutoGenerateEnabled, defaultAutomationTemplateId,
+    setIsAutoGenerateEnabled, setDefaultAutomationTemplateId
+  } = useAppStore();
   const { usage, resetMonthlyUsage } = useUsageStore();
 
   const apiKeyServices = [
@@ -72,6 +78,7 @@ export const SettingsPanel: React.FC = () => {
 
   useEffect(() => {
     loadSettings();
+    loadTemplates();
   }, []);
   
   // Debug logging to check API key persistence
@@ -79,6 +86,17 @@ export const SettingsPanel: React.FC = () => {
     console.log('[SettingsPanel] Current API keys from store:', apiKeys);
     console.log('[SettingsPanel] localStorage contentflow-storage:', localStorage.getItem('contentflow-storage'));
   }, [apiKeys]);
+
+  const loadTemplates = async () => {
+    try {
+      const templates = await invoke<Array<{ template_id: string; template_name: string; is_default: boolean }>>('get_all_templates');
+      // Only show custom templates (not default ones) for automation
+      const customTemplates = templates.filter(t => !t.is_default);
+      setAvailableTemplates(customTemplates);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -199,6 +217,23 @@ export const SettingsPanel: React.FC = () => {
     } catch (error) {
       addNotification('error', 'Failed to verify API key');
       return false;
+    }
+  };
+
+  const handleAutomationChange = async (id: string, value: any) => {
+    try {
+      if (id === 'auto_generate_enabled') {
+        setIsAutoGenerateEnabled(value);
+        addNotification('success', `Automation mode ${value ? 'enabled' : 'disabled'}`);
+      } else if (id === 'default_automation_template') {
+        setDefaultAutomationTemplateId(value || null);
+        if (value) {
+          const template = availableTemplates.find(t => t.template_id === value);
+          addNotification('success', `Default template set to "${template?.template_name || 'Unknown'}"`);
+        }
+      }
+    } catch (error) {
+      addNotification('error', 'Failed to update automation settings');
     }
   };
 
@@ -367,6 +402,28 @@ export const SettingsPanel: React.FC = () => {
     },
   ];
 
+  const automationItems: PreferenceItem[] = [
+    {
+      id: 'auto_generate_enabled',
+      label: 'Enable Automation Mode',
+      description: 'Automatically generate content using your default template whenever new transcripts are imported',
+      type: 'toggle',
+      value: isAutoGenerateEnabled,
+    },
+    {
+      id: 'default_automation_template',
+      label: 'Default Automation Template',
+      description: 'Template to use for automatic content generation',
+      type: 'select',
+      value: defaultAutomationTemplateId || '',
+      options: [
+        { value: '', label: 'Select a template...' },
+        ...availableTemplates.map(t => ({ value: t.template_id, label: t.template_name }))
+      ],
+      disabled: !isAutoGenerateEnabled,
+    },
+  ];
+
   const fileOrgItems: PreferenceItem[] = [
     {
       id: 'watch_folder',
@@ -515,6 +572,14 @@ export const SettingsPanel: React.FC = () => {
                 icon="settings"
                 items={preferenceItems}
                 onChange={handlePreferenceChange}
+              />
+
+              <PreferenceGroup
+                title="Automation Settings"
+                description="Configure automatic content generation for new transcripts"
+                icon="robot"
+                items={automationItems}
+                onChange={handleAutomationChange}
               />
             </div>
           )}

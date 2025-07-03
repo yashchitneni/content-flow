@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '../lib/tauri-wrapper';
 import { useAuth } from '../lib/auth/AuthContext';
 
 export const AuthCallback: React.FC = () => {

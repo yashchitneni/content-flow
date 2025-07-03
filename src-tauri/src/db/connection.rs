@@ -1,6 +1,7 @@
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
-use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+#[cfg(test)]
+use std::path::PathBuf;
 
 pub struct Database {
     pub pool: SqlitePool,
@@ -27,6 +28,7 @@ impl Database {
     }
     
     // Task #12: Add in-memory database for testing
+    #[cfg(test)]
     pub async fn new_in_memory() -> Result<Self, Box<dyn std::error::Error>> {
         let pool = SqlitePoolOptions::new()
             .max_connections(1)
@@ -43,7 +45,7 @@ impl Database {
 }
 
 // Helper function to get database path for development/testing
-#[allow(dead_code)]
+#[cfg(test)]
 pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let app_dir = app.path()
         .app_data_dir()

@@ -15,6 +15,8 @@ use commands::transcripts::{
 };
 use commands::upload::{UploadManager, initialize_upload_service, create_descript_project, batch_upload_files, get_export_instructions, open_export_folder, get_upload_status, cancel_upload};
 use commands::settings::SettingsState;
+use commands::templates::{get_all_templates, get_template, create_template, update_template, delete_template};
+use commands::content::{save_generated_content, get_all_content, get_content_by_id, update_content, delete_content, search_content};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -99,7 +101,20 @@ fn main() {
             commands::settings::update_file_organization,
             commands::settings::update_brand_settings,
             commands::settings::update_usage_stats,
-            commands::settings::verify_api_key
+            commands::settings::verify_api_key,
+            // Template commands
+            get_all_templates,
+            get_template,
+            create_template,
+            update_template,
+            delete_template,
+            // Content commands
+            save_generated_content,
+            get_all_content,
+            get_content_by_id,
+            update_content,
+            delete_content,
+            search_content
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

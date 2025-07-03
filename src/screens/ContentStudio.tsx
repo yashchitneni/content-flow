@@ -163,7 +163,8 @@ export const ContentStudio: React.FC = () => {
       const result = await workflow.generateContent(
         transcriptData,
         templateTypeMap[selectedTemplate || 'twitter-thread'] || 'thread',
-        templateConstraints[selectedTemplate || 'twitter-thread']
+        templateConstraints[selectedTemplate || 'twitter-thread'],
+        selectedTemplate // Pass the template ID for saving
       );
       
       console.log('[ContentStudio] Workflow execution complete. Full result:', result);
