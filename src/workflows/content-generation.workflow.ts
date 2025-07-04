@@ -490,49 +490,98 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
     try {
       // Get or create template ID
       let templateId = state.template.templateId;
+      let templateName = state.template.type;
       
-      if (!templateId) {
-        // Get default template ID based on type
-        const templates = await invoke<Array<{ template_id: string; template_type: string; is_default: boolean }>>('get_all_templates');
-        const defaultTemplate = templates.find(t => 
-          t.template_type === state.template.type && t.is_default
-        );
-        
-        if (defaultTemplate) {
-          templateId = defaultTemplate.template_id;
-        } else {
-          // Use a default template ID if none found
-          templateId = `default-${state.template.type}`;
+      // Try to get template info from Tauri first
+      try {
+        if (!templateId) {
+          // Get default template ID based on type
+          const templates = await invoke<Array<{ template_id: string; template_type: string; template_name: string; is_default: boolean }>>('get_all_templates');
+          const defaultTemplate = templates.find(t => 
+            t.template_type === state.template.type && t.is_default
+          );
+          
+          if (defaultTemplate) {
+            templateId = defaultTemplate.template_id;
+            templateName = defaultTemplate.template_name;
+          } else {
+            // Use a default template ID if none found
+            templateId = `default-${state.template.type}`;
+          }
         }
-      }
-      
-      // Prepare content data
-      const contentData = {
-        title: state.generatedContent.title,
-        content: state.generatedContent.content,
-        metadata: state.generatedContent.metadata,
-      };
-      
-      // Save to database
-      const contentId = await invoke<string>('save_generated_content', {
-        request: {
-          template_id: templateId,
+        
+        // Prepare content data
+        const contentData = {
           title: state.generatedContent.title,
-          content: contentData,
-          source_transcript_ids: state.transcripts.map(t => t.id),
-        },
-      });
-      
-      console.log('[ContentGeneration] Content saved with ID:', contentId);
-      
-      this.endTimer('saveContent');
-      return {
-        ...state,
-        generatedContent: {
-          ...state.generatedContent,
-          contentId,
-        },
-      };
+          content: state.generatedContent.content,
+          metadata: state.generatedContent.metadata,
+        };
+        
+        // Save to database
+        const contentId = await invoke<string>('save_generated_content', {
+          request: {
+            template_id: templateId,
+            title: state.generatedContent.title,
+            content: contentData,
+            source_transcript_ids: state.transcripts.map(t => t.id),
+          },
+        });
+        
+        console.log('[ContentGeneration] Content saved to Tauri database with ID:', contentId);
+        
+        this.endTimer('saveContent');
+        return {
+          ...state,
+          generatedContent: {
+            ...state.generatedContent,
+            contentId,
+          },
+        };
+      } catch (tauriError) {
+        console.warn('[ContentGeneration] Tauri save failed, using localStorage fallback:', tauriError);
+        
+        // Fallback to localStorage via content store
+        const { useContentStore } = await import('../store/content.store');
+        const { addContent } = useContentStore.getState();
+        
+        // Map template type to friendly name
+        const templateTypeToName: Record<string, string> = {
+          'thread': 'Twitter Thread',
+          'twitter-thread': 'Twitter Thread',
+          'carousel': 'Instagram Carousel',
+          'instagram-carousel': 'Instagram Carousel',
+          'newsletter': 'Newsletter',
+          'blog': 'Blog Post',
+          'linkedin-article': 'LinkedIn Article',
+          'video-script': 'Video Script',
+          'youtube-script': 'YouTube Script',
+        };
+        
+        const contentId = addContent({
+          templateId: templateId || `default-${state.template.type}`,
+          templateName: templateTypeToName[state.template.templateId || state.template.type] || templateName,
+          templateType: state.template.templateId || state.template.type,
+          title: state.generatedContent.title,
+          contentData: {
+            title: state.generatedContent.title,
+            content: state.generatedContent.content,
+            metadata: state.generatedContent.metadata,
+          },
+          status: 'draft',
+          sourceTranscriptIds: state.transcripts.map(t => t.id),
+        });
+        
+        console.log('[ContentGeneration] Content saved to localStorage with ID:', contentId);
+        
+        this.endTimer('saveContent');
+        return {
+          ...state,
+          generatedContent: {
+            ...state.generatedContent,
+            contentId,
+          },
+        };
+      }
     } catch (error) {
       console.error('[ContentGeneration] Failed to save content:', error);
       // Don't fail the whole workflow if saving fails

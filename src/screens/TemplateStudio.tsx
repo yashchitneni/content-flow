@@ -103,12 +103,13 @@ Newsletter Structure:
 
   const loadTemplates = async () => {
     try {
-      // Load templates from database
+      // Try to load templates from database
       const result = await invoke<Template[]>('get_all_templates');
       setTemplates(result || []);
     } catch (error) {
-      console.error('Failed to load templates:', error);
-      addNotification('error', 'Failed to load templates');
+      console.warn('Templates from database not available:', error);
+      // Don't show error to user, just use empty array
+      setTemplates([]);
     } finally {
       setIsLoading(false);
     }
@@ -250,7 +251,7 @@ Newsletter Structure:
           {isLoading ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center gap-2 text-theme-secondary">
-                <Icon name="spinner" className="w-5 h-5 animate-spin" />
+                <Icon name="refresh" className="w-5 h-5 animate-spin" />
                 Loading templates...
               </div>
             </div>

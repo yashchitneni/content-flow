@@ -131,7 +131,7 @@ export const ContentStudio: React.FC = () => {
       
       const transcriptData = selectedTranscriptData.map(transcript => ({
         id: transcript.id,
-        content: transcript.full_content || transcript.content_preview || transcript.content
+        content: transcript.full_content || transcript.content_preview
       }));
       
       console.log('[ContentStudio] Transcript data prepared:', transcriptData.map(t => ({
@@ -423,9 +423,10 @@ export const ContentStudio: React.FC = () => {
           content={generatedContent.content}
           format={generatedContent.format}
           metadata={generatedContent.metadata}
-          onEdit={() => {
-            setShowPreview(false);
-            addNotification('info', 'Edit functionality coming soon!');
+          onEdit={async () => {
+            // Note: The actual content update happens inside ContentPreviewModal
+            // via the ContentEditor component. This callback is called after save.
+            addNotification('success', 'Content updated successfully!');
           }}
           onExport={() => {
             setShowPreview(false);

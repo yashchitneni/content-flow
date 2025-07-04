@@ -101,7 +101,9 @@ export const SettingsPanel: React.FC = () => {
       const customTemplates = templates.filter(t => !t.is_default);
       setAvailableTemplates(customTemplates);
     } catch (error) {
-      console.error('Failed to load templates:', error);
+      console.warn('Templates from database not available:', error);
+      // Just use empty array if Tauri is not available
+      setAvailableTemplates([]);
     }
   };
 

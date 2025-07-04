@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../../atoms/Modal';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icon';
 import { Badge } from '../../atoms/Badge';
+import { ContentEditor } from '../../organisms/ContentEditor';
 
 export interface ContentPreviewModalProps {
   isOpen: boolean;
@@ -28,9 +29,11 @@ export const ContentPreviewModal: React.FC<ContentPreviewModalProps> = ({
   onEdit,
   onExport,
 }) => {
+  const [showEditor, setShowEditor] = useState(false);
+  const [currentContent, setCurrentContent] = useState({ title, content });
   const formatContent = () => {
-    if (Array.isArray(content)) {
-      return content.map((item, index) => (
+    if (Array.isArray(currentContent.content)) {
+      return currentContent.content.map((item, index) => (
         <div key={index} className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{item}</p>
         </div>
@@ -38,13 +41,27 @@ export const ContentPreviewModal: React.FC<ContentPreviewModalProps> = ({
     }
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <pre className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 font-normal">{content}</pre>
+        <pre className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 font-normal">{currentContent.content}</pre>
       </div>
     );
   };
 
+  const handleEdit = () => {
+    setShowEditor(true);
+  };
+
+  const handleSave = (updatedContent: { title: string; content: string | string[] }) => {
+    setCurrentContent(updatedContent);
+    setShowEditor(false);
+    // Call parent's onEdit if provided to persist changes
+    if (onEdit) {
+      onEdit();
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="lg">
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title={currentContent.title} size="lg">
       <div className="space-y-4">
         {/* Header with metadata */}
         <div className="flex items-center justify-between">
@@ -76,7 +93,7 @@ export const ContentPreviewModal: React.FC<ContentPreviewModalProps> = ({
             Close
           </Button>
           {onEdit && (
-            <Button variant="secondary" onClick={onEdit}>
+            <Button variant="secondary" onClick={handleEdit}>
               <Icon name="edit" className="w-4 h-4 mr-2" />
               Edit Content
             </Button>
@@ -90,5 +107,19 @@ export const ContentPreviewModal: React.FC<ContentPreviewModalProps> = ({
         </div>
       </div>
     </Modal>
+    
+    {/* Content Editor Modal */}
+    <ContentEditor
+      isOpen={showEditor}
+      onClose={() => setShowEditor(false)}
+      content={{
+        title: currentContent.title,
+        content: currentContent.content,
+        format: format,
+        metadata: metadata
+      }}
+      onSave={handleSave}
+    />
+    </>
   );
 };

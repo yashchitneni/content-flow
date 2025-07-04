@@ -3,10 +3,13 @@ import { invoke } from '../lib/tauri-wrapper';
 import { Input } from '../components/atoms/Input';
 import { Button } from '../components/atoms/Button';
 import { Spinner } from '../components/atoms/Spinner';
+import { Icon } from '../components/atoms/Icon';
 import { EmptyState } from '../components/molecules/EmptyState';
 import { Modal } from '../components/atoms/Modal';
-import { Library, Search, Download, Share2, Trash2, Edit, Eye } from 'lucide-react';
+import { Library, Search, Download, Share2, Trash2, Eye } from 'lucide-react';
 import { useUIStore } from '../store/ui.store';
+import { useContentStore, SavedContent } from '../store/content.store';
+import { ContentEditor } from '../components/organisms/ContentEditor';
 
 interface ContentWithTemplate {
   content_id: string;
@@ -27,15 +30,17 @@ interface ParsedContent {
 }
 
 export const ContentLibrary: React.FC = () => {
-  const [content, setContent] = useState<ContentWithTemplate[]>([]);
-  const [filteredContent, setFilteredContent] = useState<ContentWithTemplate[]>([]);
+  const [content, setContent] = useState<(ContentWithTemplate | SavedContent)[]>([]);
+  const [filteredContent, setFilteredContent] = useState<(ContentWithTemplate | SavedContent)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedContent, setSelectedContent] = useState<ContentWithTemplate | null>(null);
+  const [selectedContent, setSelectedContent] = useState<ContentWithTemplate | SavedContent | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const { addNotification } = useUIStore();
+  const { getAllContent, searchContent, deleteContent: deleteFromStore, updateContent: updateInStore } = useContentStore();
 
   useEffect(() => {
     loadContent();
@@ -45,12 +50,45 @@ export const ContentLibrary: React.FC = () => {
     filterContent();
   }, [searchQuery, content]);
 
+  // Helper to check if content is from SavedContent store
+  const isSavedContent = (item: ContentWithTemplate | SavedContent): item is SavedContent => {
+    return 'contentData' in item;
+  };
+
+  // Helper to normalize content for display
+  const normalizeContent = (item: ContentWithTemplate | SavedContent): ContentWithTemplate => {
+    if (isSavedContent(item)) {
+      return {
+        content_id: item.id,
+        template_id: item.templateId,
+        template_name: item.templateName,
+        template_type: item.templateType,
+        title: item.title,
+        content_data: JSON.stringify(item.contentData),
+        status: item.status,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt,
+      };
+    }
+    return item;
+  };
+
   const loadContent = async () => {
     try {
       setLoading(true);
       setError(null);
-      const allContent = await invoke<ContentWithTemplate[]>('get_all_content');
-      setContent(allContent);
+      
+      // Try to load from Tauri first
+      try {
+        const allContent = await invoke<ContentWithTemplate[]>('get_all_content');
+        setContent(allContent);
+      } catch (tauriError) {
+        console.warn('Failed to load from Tauri, using localStorage:', tauriError);
+        
+        // Fallback to localStorage
+        const localContent = getAllContent();
+        setContent(localContent);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load content');
       addNotification(
@@ -70,13 +108,14 @@ export const ContentLibrary: React.FC = () => {
 
     const query = searchQuery.toLowerCase();
     const filtered = content.filter(item => {
-      const title = item.title?.toLowerCase() || '';
-      const templateName = item.template_name.toLowerCase();
-      const templateType = item.template_type.toLowerCase();
+      const normalized = normalizeContent(item);
+      const title = normalized.title?.toLowerCase() || '';
+      const templateName = normalized.template_name.toLowerCase();
+      const templateType = normalized.template_type.toLowerCase();
       
       // Also search within content data
       try {
-        const parsed: ParsedContent = JSON.parse(item.content_data);
+        const parsed: ParsedContent = JSON.parse(normalized.content_data);
         const contentText = Array.isArray(parsed.content) 
           ? parsed.content.join(' ').toLowerCase()
           : parsed.content.toLowerCase();
@@ -118,9 +157,15 @@ export const ContentLibrary: React.FC = () => {
     if (!selectedContent) return;
 
     try {
-      await invoke('delete_content', {
-        contentId: selectedContent.content_id,
-      });
+      if (isSavedContent(selectedContent)) {
+        // Delete from localStorage
+        deleteFromStore(selectedContent.id);
+      } else {
+        // Try to delete from Tauri
+        await invoke('delete_content', {
+          contentId: selectedContent.content_id,
+        });
+      }
       
       addNotification(
         'success',
@@ -289,69 +334,82 @@ export const ContentLibrary: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredContent.map((item) => (
-            <div
-              key={item.content_id}
-              className="glass-panel p-6 hover:shadow-glow-subtle transition-all duration-300"
-            >
-              {/* Card Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold line-clamp-1 mb-1">
-                    {item.title || 'Untitled Content'}
-                  </h3>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-theme-accent">{item.template_name}</span>
-                    <span className="text-theme-tertiary">•</span>
-                    <span className={getStatusColor(item.status)}>
-                      {item.status}
-                    </span>
+          {filteredContent.map((item) => {
+            const normalized = normalizeContent(item);
+            return (
+              <div
+                key={normalized.content_id}
+                className="glass-panel p-6 hover:shadow-glow-subtle transition-all duration-300"
+              >
+                {/* Card Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold line-clamp-1 mb-1">
+                      {normalized.title || 'Untitled Content'}
+                    </h3>
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-theme-accent">{normalized.template_name}</span>
+                      <span className="text-theme-tertiary">•</span>
+                      <span className={getStatusColor(normalized.status)}>
+                        {normalized.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Preview */}
+                <div className="mb-4">
+                  {renderContentPreview(normalized.content_data)}
+                </div>
+
+                {/* Card Footer */}
+                <div className="flex items-center justify-between pt-4 border-t border-theme">
+                  <span className="text-xs text-theme-tertiary">
+                    {formatDate(normalized.created_at)}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedContent(item);
+                        setViewModalOpen(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedContent(item);
+                        setEditModalOpen(true);
+                      }}
+                    >
+                      <Icon name="edit" className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleExport(normalized)}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedContent(item);
+                        setDeleteModalOpen(true);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-theme-error" />
+                    </Button>
                   </div>
                 </div>
               </div>
-
-              {/* Content Preview */}
-              <div className="mb-4">
-                {renderContentPreview(item.content_data)}
-              </div>
-
-              {/* Card Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-theme">
-                <span className="text-xs text-theme-tertiary">
-                  {formatDate(item.created_at)}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setSelectedContent(item);
-                      setViewModalOpen(true);
-                    }}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleExport(item)}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setSelectedContent(item);
-                      setDeleteModalOpen(true);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 text-theme-error" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -362,55 +420,58 @@ export const ContentLibrary: React.FC = () => {
           setViewModalOpen(false);
           setSelectedContent(null);
         }}
-        title={selectedContent?.title || 'Content Details'}
+        title={selectedContent ? normalizeContent(selectedContent).title || 'Content Details' : 'Content Details'}
       >
-        {selectedContent && (
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-theme-secondary mb-1">Template</p>
-              <p className="font-medium">{selectedContent.template_name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-theme-secondary mb-1">Status</p>
-              <p className={`font-medium ${getStatusColor(selectedContent.status)}`}>
-                {selectedContent.status}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-theme-secondary mb-1">Created</p>
-              <p className="font-medium">{formatDate(selectedContent.created_at)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-theme-secondary mb-2">Content</p>
-              <div className="glass-panel p-4 max-h-96 overflow-y-auto">
-                {(() => {
-                  try {
-                    const parsed: ParsedContent = JSON.parse(selectedContent.content_data);
-                    if (Array.isArray(parsed.content)) {
-                      return (
-                        <div className="space-y-3">
-                          {parsed.content.map((item, index) => (
-                            <div key={index} className="p-3 bg-theme-hover rounded">
-                              <p className="text-sm">{item}</p>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div className="whitespace-pre-wrap">
-                          {parsed.content}
-                        </div>
-                      );
+        {selectedContent && (() => {
+          const normalized = normalizeContent(selectedContent);
+          return (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-theme-secondary mb-1">Template</p>
+                <p className="font-medium">{normalized.template_name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-theme-secondary mb-1">Status</p>
+                <p className={`font-medium ${getStatusColor(normalized.status)}`}>
+                  {normalized.status}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-theme-secondary mb-1">Created</p>
+                <p className="font-medium">{formatDate(normalized.created_at)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-theme-secondary mb-2">Content</p>
+                <div className="glass-panel p-4 max-h-96 overflow-y-auto">
+                  {(() => {
+                    try {
+                      const parsed: ParsedContent = JSON.parse(normalized.content_data);
+                      if (Array.isArray(parsed.content)) {
+                        return (
+                          <div className="space-y-3">
+                            {parsed.content.map((item, index) => (
+                              <div key={index} className="p-3 bg-theme-hover rounded">
+                                <p className="text-sm">{item}</p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="whitespace-pre-wrap">
+                            {parsed.content}
+                          </div>
+                        );
+                      }
+                    } catch {
+                      return <p className="text-theme-error">Failed to parse content</p>;
                     }
-                  } catch {
-                    return <p className="text-theme-error">Failed to parse content</p>;
-                  }
-                })()}
+                  })()}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </Modal>
 
       {/* Delete Confirmation Modal */}
@@ -443,6 +504,70 @@ export const ContentLibrary: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Edit Modal */}
+      {selectedContent && editModalOpen && (() => {
+        const normalized = normalizeContent(selectedContent);
+        let parsed: ParsedContent;
+        try {
+          parsed = JSON.parse(normalized.content_data);
+        } catch {
+          parsed = {
+            title: normalized.title || '',
+            content: '',
+          };
+        }
+        
+        return (
+          <ContentEditor
+            isOpen={editModalOpen}
+            onClose={() => {
+              setEditModalOpen(false);
+              setSelectedContent(null);
+            }}
+            content={{
+              title: parsed.title,
+              content: parsed.content,
+              format: normalized.template_type,
+              metadata: parsed.metadata as { generatedAt: string; wordCount: number } | undefined,
+            }}
+            onSave={async (updatedContent) => {
+              // Update the content
+              if (isSavedContent(selectedContent)) {
+                // Update in localStorage
+                updateInStore(selectedContent.id, {
+                  title: updatedContent.title,
+                  contentData: {
+                    title: updatedContent.title,
+                    content: updatedContent.content,
+                    metadata: parsed.metadata,
+                  },
+                });
+              } else {
+                // Try to update in Tauri
+                try {
+                  await invoke('update_content', {
+                    contentId: selectedContent.content_id,
+                    title: updatedContent.title,
+                    content: {
+                      title: updatedContent.title,
+                      content: updatedContent.content,
+                      metadata: parsed.metadata,
+                    },
+                  });
+                } catch (err) {
+                  console.error('Failed to update in Tauri:', err);
+                }
+              }
+              
+              addNotification('success', 'Content updated successfully!');
+              setEditModalOpen(false);
+              setSelectedContent(null);
+              loadContent();
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };
