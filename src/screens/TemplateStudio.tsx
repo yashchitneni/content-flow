@@ -103,23 +103,9 @@ Newsletter Structure:
 
   const loadTemplates = async () => {
     try {
-      // In real implementation, this would call Tauri command
-      // const result = await invoke('get_all_templates');
-      // For now, use mock data
-      const mockTemplates: Template[] = [
-        {
-          template_id: '1',
-          template_name: 'My Custom Thread Template',
-          template_type: 'thread',
-          description: 'My personalized Twitter thread style',
-          prompt: 'Create a thread in my voice...',
-          constraints: '{"maxTweets": 8}',
-          is_default: false,
-          created_at: '2025-01-03T10:00:00Z',
-          updated_at: '2025-01-03T10:00:00Z'
-        }
-      ];
-      setTemplates(mockTemplates);
+      // Load templates from database
+      const result = await invoke<Template[]>('get_all_templates');
+      setTemplates(result || []);
     } catch (error) {
       console.error('Failed to load templates:', error);
       addNotification('error', 'Failed to load templates');
@@ -156,7 +142,7 @@ Newsletter Structure:
   const handleDeleteTemplate = async (template: Template) => {
     if (window.confirm(`Are you sure you want to delete "${template.template_name}"?`)) {
       try {
-        // await invoke('delete_template', { templateId: template.template_id });
+        await invoke('delete_template', { templateId: template.template_id });
         addNotification('success', 'Template deleted successfully');
         loadTemplates();
       } catch (error) {
@@ -170,10 +156,10 @@ Newsletter Structure:
     
     try {
       if (formMode === 'create') {
-        // await invoke('create_template', { templateData: formData });
+        await invoke('create_template', { templateData: formData });
         addNotification('success', 'Template created successfully');
       } else {
-        // await invoke('update_template', { templateId: selectedTemplate?.template_id, templateData: formData });
+        await invoke('update_template', { templateId: selectedTemplate?.template_id, templateData: formData });
         addNotification('success', 'Template updated successfully');
       }
       

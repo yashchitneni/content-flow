@@ -34,7 +34,8 @@ export interface ContentGenerationState extends BaseWorkflowState {
 
 export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationState> {
   private model: ChatOpenAI | ChatAnthropic | null = null;
-  private config: WorkflowConfig;
+  protected config: WorkflowConfig;
+  private timings: Record<string, { start: number; end?: number; duration?: number }> = {};
   
   constructor(config: WorkflowConfig) {
     super('ContentGeneration', config, {
@@ -60,6 +61,38 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     
     this.config = config;
     // Don't initialize the model in constructor - do it lazily when needed
+  }
+
+  private startTimer(step: string): void {
+    this.timings[step] = { start: performance.now() };
+    console.log(`[TIMING] ${step} started at ${new Date().toISOString()}`);
+  }
+
+  private endTimer(step: string): void {
+    if (this.timings[step]) {
+      const end = performance.now();
+      const duration = end - this.timings[step].start;
+      this.timings[step].end = end;
+      this.timings[step].duration = duration;
+      console.log(`[TIMING] ${step} completed in ${duration.toFixed(2)}ms (${(duration/1000).toFixed(2)}s)`);
+    }
+  }
+
+  private logTimingSummary(): void {
+    console.log('\n[TIMING SUMMARY] Content Generation Workflow:');
+    console.log('==========================================');
+    let totalDuration = 0;
+    
+    Object.entries(this.timings).forEach(([step, timing]) => {
+      if (timing.duration) {
+        console.log(`${step}: ${timing.duration.toFixed(2)}ms (${(timing.duration/1000).toFixed(2)}s)`);
+        totalDuration += timing.duration;
+      }
+    });
+    
+    console.log('------------------------------------------');
+    console.log(`TOTAL: ${totalDuration.toFixed(2)}ms (${(totalDuration/1000).toFixed(2)}s)`);
+    console.log('==========================================\n');
   }
 
   private initializeModel(): void {
@@ -118,6 +151,8 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
   }
   
   private async validateInput(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.startTimer('validateInput');
+    
     console.log('[ContentGeneration] validateInput called with state:', {
       hasTranscripts: !!state.transcripts,
       transcriptCount: state.transcripts?.length,
@@ -133,6 +168,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     
     if (!state.transcripts || state.transcripts.length === 0) {
       console.error('[ContentGeneration] No transcripts provided!');
+      this.endTimer('validateInput');
       return this.handleStepError(
         new Error('No transcripts provided'),
         'validateInput',
@@ -142,6 +178,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     
     if (!state.template || !state.template.type) {
       console.error('[ContentGeneration] No template type specified!');
+      this.endTimer('validateInput');
       return this.handleStepError(
         new Error('No template type specified'),
         'validateInput',
@@ -150,10 +187,12 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     }
     
     console.log('[ContentGeneration] validateInput passed');
+    this.endTimer('validateInput');
     return state;
   }
   
   private async prepareContext(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.startTimer('prepareContext');
     this.logStep('prepareContext');
     
     const context = {
@@ -165,6 +204,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
       templateConstraints: this.getTemplateConstraints(state.template.type),
     };
     
+    this.endTimer('prepareContext');
     return {
       ...state,
       metadata: {
@@ -206,6 +246,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
   }
   
   private async generateContent(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.startTimer('generateContent');
     this.logStep('generateContent');
     console.log('[ContentGeneration] Starting content generation with state:', {
       transcripts: state.transcripts.length,
@@ -216,7 +257,10 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
     
     try {
       // Initialize model only when needed
+      this.startTimer('initializeModel');
       this.initializeModel();
+      this.endTimer('initializeModel');
+      
       if (!this.model) {
         throw new Error('AI model not initialized. Please check your API keys in Settings.');
       }
@@ -248,7 +292,10 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
       
       const response = await this.executeWithRetry(async () => {
         console.log('[ContentGeneration] Invoking AI model with prompt length:', prompt.length);
+        
+        this.startTimer('aiModelInvoke');
         const result = await this.model!.invoke([new HumanMessage(prompt)]);
+        this.endTimer('aiModelInvoke');
         
         console.log('[ContentGeneration] AI model response received:', {
           hasContent: !!result.content,
@@ -302,6 +349,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
         }
       }, 'generateContent');
       
+      this.endTimer('generateContent');
       return {
         ...state,
         generatedContent: {
@@ -317,6 +365,7 @@ export class ContentGenerationWorkflow extends BaseWorkflow<ContentGenerationSta
         },
       };
     } catch (error) {
+      this.endTimer('generateContent');
       return this.handleStepError(error as Error, 'generateContent', state);
     }
   }
@@ -388,9 +437,11 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
   }
   
   private async formatContent(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.startTimer('formatContent');
     this.logStep('formatContent');
     
     if (!state.generatedContent) {
+      this.endTimer('formatContent');
       return state;
     }
     
@@ -423,13 +474,16 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
         break;
     }
     
+    this.endTimer('formatContent');
     return state;
   }
   
   private async saveContent(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.startTimer('saveContent');
     this.logStep('saveContent');
     
     if (!state.generatedContent) {
+      this.endTimer('saveContent');
       return state;
     }
     
@@ -471,6 +525,7 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
       
       console.log('[ContentGeneration] Content saved with ID:', contentId);
       
+      this.endTimer('saveContent');
       return {
         ...state,
         generatedContent: {
@@ -484,14 +539,18 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
       this.logStep('saveContent', { 
         warning: `Failed to save content: ${error instanceof Error ? error.message : 'Unknown error'}` 
       });
+      this.endTimer('saveContent');
       return state;
     }
   }
   
   private async validateOutput(state: ContentGenerationState): Promise<ContentGenerationState> {
+    this.startTimer('validateOutput');
     this.logStep('validateOutput');
     
     if (!state.generatedContent) {
+      this.endTimer('validateOutput');
+      this.logTimingSummary();
       return this.handleStepError(
         new Error('No content was generated'),
         'validateOutput',
@@ -530,6 +589,9 @@ Return ONLY a JSON object (no markdown formatting, no code blocks) with this str
         }
         break;
     }
+    
+    this.endTimer('validateOutput');
+    this.logTimingSummary();
     
     return {
       ...state,

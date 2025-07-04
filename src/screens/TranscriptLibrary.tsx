@@ -11,7 +11,6 @@ import { Badge } from '../components/atoms/Badge';
 import { Modal } from '../components/atoms/Modal';
 import { useTranscriptStore } from '../store/transcript.store';
 import { useUIStore } from '../store/ui.store';
-import { mockTranscripts } from '../lib/mock-transcripts';
 import { useUsageStore } from '../store/usage.store';
 
 interface FilterOptions {
@@ -46,11 +45,10 @@ export const TranscriptLibrary: React.FC = () => {
   const [showBatchActions, setShowBatchActions] = useState(false);
   const [showTagCloud, setShowTagCloud] = useState(false);
 
-  // Load mock data on mount if no transcripts exist
+  // Logic to load mock data has been removed.
+  // The library will now correctly start empty.
   useEffect(() => {
-    if (transcripts.length === 0) {
-      addTranscripts(mockTranscripts);
-    }
+    // The library will now correctly start empty.
   }, []);
 
   // Filter and sort transcripts

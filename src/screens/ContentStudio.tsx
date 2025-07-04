@@ -10,7 +10,6 @@ import { useTranscriptStore } from '../store/transcript.store';
 import { useApiKeyStore } from '../store/apiKey.store';
 import { useUIStore } from '../store/ui.store';
 import WorkflowOrchestrator from '../workflows';
-// import { generateMockContent, MockGenerationResult } from '../lib/mock-content-generator';
 
 export const ContentStudio: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<ContentTemplate | undefined>();
