@@ -94,9 +94,11 @@ pub async fn create_template(
     db: State<'_, Database>,
     template_data: CreateTemplateRequest,
 ) -> Result<Template, String> {
+    println!("[create_template] Received request: {:?}", template_data);
     let template_id = Uuid::new_v4().to_string();
+    println!("[create_template] Generated ID: {}", template_id);
     
-    sqlx::query(
+    let result = sqlx::query(
         r#"
         INSERT INTO Template (
             template_id,
@@ -116,10 +118,18 @@ pub async fn create_template(
     .bind(&template_data.prompt)
     .bind(&template_data.constraints)
     .execute(&db.pool)
-    .await
-    .map_err(|e| format!("Failed to create template: {}", e))?;
-
-    get_template(db, template_id).await
+    .await;
+    
+    match result {
+        Ok(_) => {
+            println!("[create_template] Successfully inserted template");
+            get_template(db, template_id).await
+        }
+        Err(e) => {
+            println!("[create_template] Database error: {}", e);
+            Err(format!("Failed to create template: {}", e))
+        }
+    }
 }
 
 #[tauri::command]

@@ -3,33 +3,93 @@
 -- Date: January 3, 2025
 -- Description: Update Template table to support user-created templates
 
+-- First, drop tables that depend on Template
+DROP TABLE IF EXISTS ContentSources;
+DROP TABLE IF EXISTS ContentVersion;
+DROP TABLE IF EXISTS ExportHistory;
+DROP TABLE IF EXISTS GeneratedContent;
+
 -- Drop the existing Template table to modify constraints
 DROP TABLE IF EXISTS Template;
 
 -- Recreate Template table with updated schema
 CREATE TABLE IF NOT EXISTS Template (
-    TemplateID TEXT PRIMARY KEY,
-    TemplateName TEXT NOT NULL UNIQUE,
-    TemplateType TEXT NOT NULL, -- Removed CHECK constraint to allow custom types
-    Description TEXT, -- New field for template description
-    Prompt TEXT NOT NULL, -- Renamed from Structure, changed to TEXT
-    Constraints TEXT, -- JSON for platform-specific constraints
-    IsDefault BOOLEAN NOT NULL DEFAULT 0, -- New field to distinguish system vs user templates
-    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    template_id TEXT PRIMARY KEY,
+    template_name TEXT NOT NULL UNIQUE,
+    template_type TEXT NOT NULL, -- Removed CHECK constraint to allow custom types
+    description TEXT, -- New field for template description
+    prompt TEXT NOT NULL, -- Renamed from Structure, changed to TEXT
+    constraints TEXT, -- JSON for platform-specific constraints
+    is_default BOOLEAN NOT NULL DEFAULT 0, -- New field to distinguish system vs user templates
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Recreate the index
-CREATE INDEX IF NOT EXISTS idx_generated_content_template ON GeneratedContent(TemplateID);
-
--- Recreate the trigger for UpdatedAt
+-- Recreate the trigger for updated_at
 CREATE TRIGGER IF NOT EXISTS template_updated_at AFTER UPDATE ON Template
 BEGIN
-    UPDATE Template SET UpdatedAt = CURRENT_TIMESTAMP WHERE TemplateID = NEW.TemplateID;
+    UPDATE Template SET updated_at = CURRENT_TIMESTAMP WHERE template_id = NEW.template_id;
+END;
+
+-- Recreate GeneratedContent table with updated foreign key
+CREATE TABLE IF NOT EXISTS GeneratedContent (
+    content_id TEXT PRIMARY KEY,
+    template_id TEXT NOT NULL,
+    title TEXT,
+    content_data TEXT NOT NULL, -- JSON
+    status TEXT NOT NULL CHECK(status IN ('Draft', 'Ready', 'Published')),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (template_id) REFERENCES Template(template_id) ON DELETE RESTRICT
+);
+
+-- Recreate ContentSources junction table
+CREATE TABLE IF NOT EXISTS ContentSources (
+    content_id TEXT NOT NULL,
+    transcript_id TEXT NOT NULL,
+    order_index INTEGER NOT NULL,
+    PRIMARY KEY (content_id, transcript_id),
+    FOREIGN KEY (content_id) REFERENCES GeneratedContent(content_id) ON DELETE CASCADE,
+    FOREIGN KEY (transcript_id) REFERENCES Transcript(TranscriptID) ON DELETE CASCADE
+);
+
+-- Recreate ContentVersion table
+CREATE TABLE IF NOT EXISTS ContentVersion (
+    version_id TEXT PRIMARY KEY,
+    content_id TEXT NOT NULL,
+    version_number INTEGER NOT NULL,
+    version_data TEXT NOT NULL, -- JSON
+    change_summary TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (content_id) REFERENCES GeneratedContent(content_id) ON DELETE CASCADE,
+    UNIQUE(content_id, version_number)
+);
+
+-- Recreate ExportHistory table
+CREATE TABLE IF NOT EXISTS ExportHistory (
+    export_id TEXT PRIMARY KEY,
+    content_id TEXT NOT NULL,
+    export_format TEXT NOT NULL,
+    export_path TEXT,
+    exported_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    platform TEXT,
+    FOREIGN KEY (content_id) REFERENCES GeneratedContent(content_id) ON DELETE CASCADE
+);
+
+-- Recreate indexes for the new tables
+CREATE INDEX IF NOT EXISTS idx_generated_content_template ON GeneratedContent(template_id);
+CREATE INDEX IF NOT EXISTS idx_generated_content_status ON GeneratedContent(status);
+CREATE INDEX IF NOT EXISTS idx_content_version_content ON ContentVersion(content_id);
+CREATE INDEX IF NOT EXISTS idx_export_history_content ON ExportHistory(content_id);
+
+-- Recreate trigger for GeneratedContent
+CREATE TRIGGER IF NOT EXISTS generated_content_updated_at AFTER UPDATE ON GeneratedContent
+BEGIN
+    UPDATE GeneratedContent SET updated_at = CURRENT_TIMESTAMP WHERE content_id = NEW.content_id;
 END;
 
 -- Insert default system templates
-INSERT INTO Template (TemplateID, TemplateName, TemplateType, Description, Prompt, Constraints, IsDefault) VALUES
+INSERT INTO Template (template_id, template_name, template_type, description, prompt, constraints, is_default) VALUES
 (
     'default-thread',
     'Twitter/X Thread',

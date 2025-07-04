@@ -1,8 +1,9 @@
 // Task #17: Create Content Generation UI - Template System
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '../../atoms/Icon';
 import { Badge } from '../../atoms/Badge';
 import { TemplateSelectorProps, TemplateCardProps, Template, ContentTemplate } from './TemplateSelector.types';
+import { useTemplateStore } from '../../../store/template.store';
 
 // FR-042: Template definitions for Instagram Carousel, Twitter Thread, LinkedIn Article, YouTube Script
 const TEMPLATES: Template[] = [
@@ -140,6 +141,48 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   disabled = false,
   className = ''
 }) => {
+  const { customTemplates } = useTemplateStore();
+  const [allTemplates, setAllTemplates] = useState<Template[]>(TEMPLATES);
+
+  useEffect(() => {
+    // Merge custom templates with default templates
+    const customTemplatesMapped: Template[] = customTemplates
+      .filter(template => ['carousel', 'thread', 'article', 'script'].includes(template.template_type))
+      .map(template => {
+        // Map template types to the expected format
+        let mappedId: ContentTemplate;
+        switch (template.template_type) {
+          case 'carousel':
+            mappedId = 'instagram-carousel';
+            break;
+          case 'thread':
+            mappedId = 'twitter-thread';
+            break;
+          case 'article':
+            mappedId = 'linkedin-article';
+            break;
+          case 'script':
+            mappedId = 'youtube-script';
+            break;
+          default:
+            mappedId = 'twitter-thread'; // fallback
+        }
+        
+        return {
+          id: mappedId,
+          name: template.template_name,
+          description: template.description || '',
+          icon: 'file-text',
+          constraints: {
+            formatRules: [],
+            platforms: [template.template_type]
+          },
+          preview: 'Custom template'
+        };
+      });
+    
+    setAllTemplates([...TEMPLATES, ...customTemplatesMapped]);
+  }, [customTemplates]);
 
   return (
     <div className={`${className}`}>
@@ -153,7 +196,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {TEMPLATES.map((template) => (
+        {allTemplates.map((template) => (
           <TemplateCard
             key={template.id}
             template={template}
@@ -169,7 +212,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           <div className="flex items-center space-x-2">
             <Icon name="check-circle" className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             <span className="text-sm font-medium text-primary-800 dark:text-primary-300">
-              Template selected: {TEMPLATES.find(t => t.id === selectedTemplate)?.name}
+              Template selected: {allTemplates.find(t => t.id === selectedTemplate)?.name}
             </span>
           </div>
         </div>

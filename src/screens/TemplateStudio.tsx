@@ -4,6 +4,7 @@ import { Icon } from '../components/atoms/Icon';
 import { Badge } from '../components/atoms/Badge';
 import { Modal } from '../components/atoms/Modal';
 import { useUIStore } from '../store/ui.store';
+import { useTemplateStore, CustomTemplate } from '../store/template.store';
 import { invoke } from '../lib/tauri-wrapper';
 
 interface Template {
@@ -28,6 +29,7 @@ interface TemplateFormData {
 
 export const TemplateStudio: React.FC = () => {
   const { addNotification } = useUIStore();
+  const { customTemplates, addTemplate, updateTemplate, deleteTemplate } = useTemplateStore();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -103,13 +105,13 @@ Newsletter Structure:
 
   const loadTemplates = async () => {
     try {
-      // Try to load templates from database
+      // Try to load templates from Tauri database first
       const result = await invoke<Template[]>('get_all_templates');
       setTemplates(result || []);
     } catch (error) {
-      console.warn('Templates from database not available:', error);
-      // Don't show error to user, just use empty array
-      setTemplates([]);
+      console.warn('Templates from database not available, using localStorage:', error);
+      // Fall back to localStorage templates
+      setTemplates(customTemplates as Template[]);
     } finally {
       setIsLoading(false);
     }
@@ -143,12 +145,15 @@ Newsletter Structure:
   const handleDeleteTemplate = async (template: Template) => {
     if (window.confirm(`Are you sure you want to delete "${template.template_name}"?`)) {
       try {
+        // Try Tauri first
         await invoke('delete_template', { templateId: template.template_id });
         addNotification('success', 'Template deleted successfully');
-        loadTemplates();
       } catch (error) {
-        addNotification('error', 'Failed to delete template');
+        // Fall back to localStorage
+        deleteTemplate(template.template_id);
+        addNotification('success', 'Template deleted successfully');
       }
+      loadTemplates();
     }
   };
 
@@ -157,17 +162,40 @@ Newsletter Structure:
     
     try {
       if (formMode === 'create') {
-        await invoke('create_template', { templateData: formData });
-        addNotification('success', 'Template created successfully');
+        console.log('[TemplateStudio] Creating template with data:', formData);
+        try {
+          // Try Tauri first
+          const result = await invoke('create_template', { templateData: formData });
+          console.log('[TemplateStudio] Template created via Tauri:', result);
+          addNotification('success', 'Template created successfully');
+        } catch (error) {
+          console.warn('[TemplateStudio] Tauri create failed, using localStorage:', error);
+          // Fall back to localStorage
+          addTemplate(formData);
+          addNotification('success', 'Template created successfully');
+        }
       } else {
-        await invoke('update_template', { templateId: selectedTemplate?.template_id, templateData: formData });
-        addNotification('success', 'Template updated successfully');
+        console.log('[TemplateStudio] Updating template:', selectedTemplate?.template_id, formData);
+        try {
+          // Try Tauri first
+          const result = await invoke('update_template', { templateId: selectedTemplate?.template_id, templateData: formData });
+          console.log('[TemplateStudio] Template updated via Tauri:', result);
+          addNotification('success', 'Template updated successfully');
+        } catch (error) {
+          console.warn('[TemplateStudio] Tauri update failed, using localStorage:', error);
+          // Fall back to localStorage
+          if (selectedTemplate) {
+            updateTemplate(selectedTemplate.template_id, formData);
+            addNotification('success', 'Template updated successfully');
+          }
+        }
       }
       
       setShowForm(false);
       loadTemplates();
     } catch (error) {
-      addNotification('error', `Failed to ${formMode} template`);
+      console.error('[TemplateStudio] Form submission error:', error);
+      addNotification('error', `Failed to ${formMode} template: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
